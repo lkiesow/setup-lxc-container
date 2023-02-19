@@ -90,52 +90,76 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
 function exec(command) {
-    // We need at least one argument
-    if (command.length < 1) {
-        throw new Error('Need at least one argument to execute command');
-    }
-    const cmd = command[0];
-    const args = command.slice(1);
-    (0, child_process_1.execFile)(cmd, args, (error, stdout, stderr) => {
-        if (error) {
-            throw error;
+    return __awaiter(this, void 0, void 0, function* () {
+        // We need at least one argument
+        if (command.length < 1) {
+            throw new Error('Need at least one argument to execute command');
         }
-        if (stderr) {
-            core.error(`stderr: ${stderr}`);
-            return;
-        }
-        core.info(`Successfully executed ${command.join(' ')}`);
-        if (stdout) {
-            core.info(`stdout: ${stdout}`);
-        }
+        const cmd = command[0];
+        const args = command.slice(1);
+        const child = (0, child_process_1.execFile)(cmd, args, (error, stdout, stderr) => {
+            if (error) {
+                throw error;
+            }
+            if (stderr) {
+                core.error(`stderr: ${stderr}`);
+                return;
+            }
+            core.info(`Successfully executed ${command.join(' ')}`);
+            if (stdout) {
+                core.info(`stdout: ${stdout}`);
+            }
+        });
+        return new Promise((resolve) => {
+            child.on('close', resolve);
+        });
     });
 }
 function stopDocker() {
-    exec(['sudo', 'systemctl', 'stop', 'docker.service']);
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec(['sudo', 'systemctl', 'stop', 'docker.service']);
+    });
 }
 exports.stopDocker = stopDocker;
 function iptablesCleanup() {
-    exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
-    exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
-    exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
-    exec(['sudo', 'iptables', '-F']);
-    exec(['sudo', 'iptables', '-X']);
-    exec(['sudo', 'iptables', '-t', 'nat', '-F']);
-    exec(['sudo', 'iptables', '-t', 'nat', '-X']);
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
+        yield exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
+        yield exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
+        yield exec(['sudo', 'iptables', '-F']);
+        yield exec(['sudo', 'iptables', '-X']);
+        yield exec(['sudo', 'iptables', '-t', 'nat', '-F']);
+        yield exec(['sudo', 'iptables', '-t', 'nat', '-X']);
+    });
 }
 exports.iptablesCleanup = iptablesCleanup;
 function installLxc() {
-    exec(['sudo', 'apt', 'install', 'lxc']);
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec(['sudo', 'apt', 'install', 'lxc']);
+    });
 }
 exports.installLxc = installLxc;
 function startContainer(name, dist, release) {
-    exec(['sudo', 'lxc-create', '-t', 'download', '-n', name, '--', '--dist', dist, '--release', release, '--arch', 'amd64']);
-    exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
+    return __awaiter(this, void 0, void 0, function* () {
+        const create = ['sudo', 'lxc-create', '-t', 'download', '-n', name, '--'];
+        const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64'];
+        yield exec(create.concat(lxcdist));
+        yield exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
+    });
 }
 exports.startContainer = startContainer;
 

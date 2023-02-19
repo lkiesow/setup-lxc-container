@@ -30,5 +30,5 @@ outputs:
   ip:
     description: IP address of the container that was set up.
 runs:
-  using: node18
+  using: node16
   main: dist/index.js

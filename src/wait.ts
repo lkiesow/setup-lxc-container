@@ -1,5 +1,7 @@
 import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
+import {appendFileSync, readFileSync} from 'fs'
+import {homedir} from 'os'
 
 async function exec(command: string[]): Promise<void> {
   // We need at least one argument
@@ -87,4 +89,28 @@ export async function getIp(name: string): Promise<string> {
 export async function setHost(name: string, ip: string): Promise<void> {
   const cmd = `echo "${ip}  ${name}" >> /etc/hosts`
   await exec(['sudo', 'bash', '-c', cmd])
+}
+
+export async function sshKeygen(name: string): Promise<void> {
+  // Generate SSH key
+  const home = homedir()
+  const keyPath = `${home}/.ssh/id_ed25519`
+  await exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', ''])
+
+  // Configure SSH
+  let config = '\n'
+  config += `Host ${name}\n`
+  config += '  User root'
+  config += '  IdentityFile ~/.ssh/id_ed25519'
+  const configPath = `${home}/.ssh/config`
+  appendFileSync(configPath, config)
+
+  // Set key in container
+  const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
+  const key = readFileSync(`${keyPath}.pub`, 'utf8')
+  await exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']))
+  // TODO: replace with something less ugly
+  const sh = `echo ${key} | ${lxc.join(' ')} tee /root/.ssh/authorized_keys`
+  await exec(['bash', '-c', sh])
+  await exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']))
 }

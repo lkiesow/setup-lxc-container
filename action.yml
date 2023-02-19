@@ -18,9 +18,10 @@ inputs:
     required: true
     description: If to configure the container name and IP address in /etc/hosts
     default: true
-  ssh:
-    required: false
+  configure-ssh:
+    required: true
     description: If to configure an SSH key
+    default: true
   lxcinit:
     required: false
     description: >

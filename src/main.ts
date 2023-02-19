@@ -4,6 +4,7 @@ import {
   installLxc,
   iptablesCleanup,
   setHost,
+  sshKeygen,
   startContainer,
   stopDocker
 } from './wait'
@@ -14,6 +15,7 @@ async function run(): Promise<void> {
     const dist: string = core.getInput('dist')
     const release: string = core.getInput('release')
     const configureEtcHost: string = core.getInput('configure-etc-hosts')
+    const configureSsh: string = core.getInput('configure-ssh')
 
     core.startGroup('Stopping Docker service')
     await stopDocker()
@@ -40,6 +42,12 @@ async function run(): Promise<void> {
     if (configureEtcHost) {
       core.startGroup('Configuring /etc/hosts')
       await setHost(name, ip)
+      core.endGroup()
+    }
+
+    if (configureEtcHost && configureSsh) {
+      core.startGroup('Configuring SSH and generating key')
+      await sshKeygen(name)
       core.endGroup()
     }
   } catch (error) {

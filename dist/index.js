@@ -44,6 +44,7 @@ function run() {
             const dist = core.getInput('dist');
             const release = core.getInput('release');
             const configureEtcHost = core.getInput('configure-etc-hosts');
+            const configureSsh = core.getInput('configure-ssh');
             core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
             core.endGroup();
@@ -64,6 +65,11 @@ function run() {
             if (configureEtcHost) {
                 core.startGroup('Configuring /etc/hosts');
                 yield (0, wait_1.setHost)(name, ip);
+                core.endGroup();
+            }
+            if (configureEtcHost && configureSsh) {
+                core.startGroup('Configuring SSH and generating key');
+                yield (0, wait_1.sshKeygen)(name);
                 core.endGroup();
             }
         }
@@ -114,9 +120,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
+const fs_1 = __nccwpck_require__(747);
+const os_1 = __nccwpck_require__(87);
 function exec(command) {
     return __awaiter(this, void 0, void 0, function* () {
         // We need at least one argument
@@ -205,6 +213,30 @@ function setHost(name, ip) {
     });
 }
 exports.setHost = setHost;
+function sshKeygen(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Generate SSH key
+        const home = (0, os_1.homedir)();
+        const keyPath = `${home}/.ssh/id_ed25519`;
+        yield exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', '']);
+        // Configure SSH
+        let config = '\n';
+        config += `Host ${name}\n`;
+        config += '  User root';
+        config += '  IdentityFile ~/.ssh/id_ed25519';
+        const configPath = `${home}/.ssh/config`;
+        (0, fs_1.appendFileSync)(configPath, config);
+        // Set key in container
+        const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
+        const key = (0, fs_1.readFileSync)(`${keyPath}.pub`, 'utf8');
+        yield exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']));
+        // TODO: replace with something less ugly
+        const sh = `echo ${key} | ${lxc.join(' ')} tee /root/.ssh/authorized_keys`;
+        yield exec(['bash', '-c', sh]);
+        yield exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']));
+    });
+}
+exports.sshKeygen = sshKeygen;
 
 
 /***/ }),

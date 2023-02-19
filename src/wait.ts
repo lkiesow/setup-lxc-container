@@ -27,7 +27,10 @@ async function exec(command: string[]): Promise<void> {
     }
   )
   return new Promise(resolve => {
-    child.on('close', resolve)
+    child.on('close', code => {
+      core.info(`child process close all stdio with code ${code}`)
+      resolve()
+    })
   })
 }
 

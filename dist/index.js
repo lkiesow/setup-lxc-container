@@ -43,13 +43,14 @@ function run() {
             const ms = core.getInput('milliseconds');
             core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
             core.debug(new Date().toTimeString());
-            yield (0, wait_1.wait)(parseInt(ms, 10));
+            yield (0, wait_1.stopDocker)();
             core.debug(new Date().toTimeString());
-            core.setOutput('time', new Date().toTimeString());
+            core.setOutput('ip', '127.0.0.1');
         }
         catch (error) {
-            if (error instanceof Error)
+            if (error instanceof Error) {
                 core.setFailed(error.message);
+            }
         }
     });
 }
@@ -59,10 +60,11 @@ run();
 /***/ }),
 
 /***/ 817:
-/***/ (function(__unused_webpack_module, exports) {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+/* eslint no-console: 0 */
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -73,18 +75,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-function wait(milliseconds) {
+exports.stopDocker = void 0;
+const child_process_1 = __nccwpck_require__(129);
+function stopDocker() {
     return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(resolve => {
-            if (isNaN(milliseconds)) {
-                throw new Error('milliseconds not a number');
-            }
-            setTimeout(() => resolve('done!'), milliseconds);
+        return new Promise(() => {
+            (0, child_process_1.execFile)('sudo', ['systemctl', 'stop', 'docker.service'], (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`error: ${error.message}`);
+                    return;
+                }
+                if (stderr) {
+                    console.error(`stderr: ${stderr}`);
+                    return;
+                }
+                console.info(`stdout: ${stdout}`);
+            });
         });
     });
 }
-exports.wait = wait;
+exports.stopDocker = stopDocker;
 
 
 /***/ }),
@@ -2781,6 +2791,14 @@ exports.default = _default;
 
 "use strict";
 module.exports = require("assert");
+
+/***/ }),
+
+/***/ 129:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
 
 /***/ }),
 

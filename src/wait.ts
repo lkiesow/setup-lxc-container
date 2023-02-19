@@ -1,17 +1,23 @@
-const { exec } = require("child_process");
+/* eslint no-console: 0 */
+
+import {ExecException, execFile} from 'child_process'
 
 export async function stopDocker(): Promise<string> {
-  return new Promise(resolve => {
-    exec('sudo systemctl stop docker.service', (error, stdout, stderr) => {
-      if (error) {
-        console.log(`error: ${error.message}`);
-        return;
+  return new Promise(() => {
+    execFile(
+      'sudo',
+      ['systemctl', 'stop', 'docker.service'],
+      (error: ExecException | null, stdout: string, stderr: string) => {
+        if (error) {
+          console.error(`error: ${error.message}`)
+          return
+        }
+        if (stderr) {
+          console.error(`stderr: ${stderr}`)
+          return
+        }
+        console.info(`stdout: ${stdout}`)
       }
-      if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-      }
-      console.log(`stdout: ${stdout}`);
-    });
+    )
   })
 }

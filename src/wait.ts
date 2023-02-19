@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
-import {appendFileSync, readFileSync} from 'fs'
+import {appendFileSync} from 'fs'
 import {homedir} from 'os'
 
 async function exec(command: string[]): Promise<void> {
@@ -107,10 +107,11 @@ export async function sshKeygen(name: string): Promise<void> {
 
   // Set key in container
   const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
-  const key = readFileSync(`${keyPath}.pub`, 'utf8')
   await exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']))
   // TODO: replace with something less ugly
-  const sh = `echo ${key} | ${lxc.join(' ')} tee /root/.ssh/authorized_keys`
+  let sh = 'cat ~/.ssh/id_ed25519.pub | '
+  sh += lxc.join(' ')
+  sh += ' tee /root/.ssh/authorized_keys'
   await exec(['bash', '-c', sh])
   await exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']))
 }

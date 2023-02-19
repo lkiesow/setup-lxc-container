@@ -228,10 +228,11 @@ function sshKeygen(name) {
         (0, fs_1.appendFileSync)(configPath, config);
         // Set key in container
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        const key = (0, fs_1.readFileSync)(`${keyPath}.pub`, 'utf8');
         yield exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']));
         // TODO: replace with something less ugly
-        const sh = `echo ${key} | ${lxc.join(' ')} tee /root/.ssh/authorized_keys`;
+        let sh = 'cat ~/.ssh/id_ed25519.pub | ';
+        sh += lxc.join(' ');
+        sh += ' tee /root/.ssh/authorized_keys';
         yield exec(['bash', '-c', sh]);
         yield exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']));
     });

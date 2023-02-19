@@ -77,20 +77,29 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.stopDocker = void 0;
 const child_process_1 = __nccwpck_require__(129);
+function exec(command) {
+    // We need at least one argument
+    if (command.length < 1) {
+        throw new Error('Need at least one argument to execute command');
+    }
+    const cmd = command[0];
+    const args = command.slice(1);
+    (0, child_process_1.execFile)(cmd, args, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`stderr: ${stderr}`);
+            return;
+        }
+        console.info(`stdout: ${stdout}`);
+    });
+}
 function stopDocker() {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise(() => {
-            (0, child_process_1.execFile)('sudo', ['systemctl', 'stop', 'docker.service'], (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`error: ${error.message}`);
-                    return;
-                }
-                if (stderr) {
-                    console.error(`stderr: ${stderr}`);
-                    return;
-                }
-                console.info(`stdout: ${stdout}`);
-            });
+            exec(['sudo', 'systemctl', 'stop', 'docker.service']);
         });
     });
 }

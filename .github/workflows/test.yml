@@ -10,15 +10,25 @@ jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
+      - name: use node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+
       - run: |
           npm install
+
       - run: |
           npm run build
+
       - run: |
           npm run format
+
       - run: |
           npm run lint
+
       - run: |
           npm run package
 
@@ -26,7 +36,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - uses: ./
         with:
           milliseconds: 1000

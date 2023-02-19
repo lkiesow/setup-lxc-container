@@ -1,5 +1,4 @@
-/* eslint no-console: 0 */
-
+import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
 
 function exec(command: string[]): void {
@@ -18,10 +17,13 @@ function exec(command: string[]): void {
         throw error
       }
       if (stderr) {
-        console.error(`stderr: ${stderr}`)
+        core.error(`stderr: ${stderr}`)
         return
       }
-      console.info(`stdout: ${stdout}`)
+      core.info(`Successfully executed ${command}`)
+      if (stdout) {
+        core.info(`stdout: ${stdout}`)
+      }
     }
   )
 }

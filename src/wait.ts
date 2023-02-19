@@ -17,8 +17,7 @@ async function exec(command: string[]): Promise<void> {
         throw error
       }
       if (stderr) {
-        core.error(`stderr: ${stderr}`)
-        return
+        core.warning(`stderr: ${stderr}`)
       }
       core.info(`Successfully executed ${command.join(' ')}`)
       if (stdout) {
@@ -32,6 +31,30 @@ async function exec(command: string[]): Promise<void> {
       resolve()
     })
   })
+}
+
+async function getIp(name: string): Promise<string> {
+  let ip: string | undefined = undefined
+  while (!ip) {
+    const info: string = await new Promise(resolve => {
+      execFile(
+        'sudo',
+        ['lxc-info', '-n', name],
+        (error: ExecException | null, stdout: string) => {
+          if (error) {
+            throw error
+          }
+          core.debug(`Successfully called lxc-info: ${stdout}`)
+          resolve(stdout.toString())
+        }
+      )
+    })
+
+    // Check if we already have an IP
+    const ipInfo = info.split('\n').filter((l: string) => l.startsWith('IP'))
+    ip = ipInfo?.[0]?.split(/  */)?.[1]
+  }
+  return ip
 }
 
 export async function stopDocker(): Promise<void> {
@@ -61,4 +84,7 @@ export async function startContainer(
   const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64']
   await exec(create.concat(lxcdist))
   await exec(['sudo', 'lxc-start', '--name', name, '--daemon'])
+
+  const ip = await getIp(name)
+  core.info(`Container IP address: ${ip}`)
 }

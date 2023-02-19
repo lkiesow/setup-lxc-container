@@ -116,8 +116,7 @@ function exec(command) {
                 throw error;
             }
             if (stderr) {
-                core.error(`stderr: ${stderr}`);
-                return;
+                core.warning(`stderr: ${stderr}`);
             }
             core.info(`Successfully executed ${command.join(' ')}`);
             if (stdout) {
@@ -130,6 +129,27 @@ function exec(command) {
                 resolve();
             });
         });
+    });
+}
+function getIp(name) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        let ip = undefined;
+        while (!ip) {
+            const info = yield new Promise(resolve => {
+                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], (error, stdout) => {
+                    if (error) {
+                        throw error;
+                    }
+                    core.debug(`Successfully called lxc-info: ${stdout}`);
+                    resolve(stdout.toString());
+                });
+            });
+            // Check if we already have an IP
+            const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
+            ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
+        }
+        return ip;
     });
 }
 function stopDocker() {
@@ -162,6 +182,8 @@ function startContainer(name, dist, release) {
         const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64'];
         yield exec(create.concat(lxcdist));
         yield exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
+        const ip = yield getIp(name);
+        core.info(`Container IP address: ${ip}`);
     });
 }
 exports.startContainer = startContainer;

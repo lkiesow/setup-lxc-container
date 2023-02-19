@@ -40,14 +40,17 @@ const wait_1 = __nccwpck_require__(817);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const ms = core.getInput('milliseconds');
-            core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-            core.debug(new Date().toTimeString());
+            const name = core.getInput('name');
+            const dist = core.getInput('dist');
+            const release = core.getInput('release');
             core.info('Stopping Docker service');
             (0, wait_1.stopDocker)();
             core.info('Resetting iptables rules');
-            yield (0, wait_1.iptablesCleanup)();
-            core.debug(new Date().toTimeString());
+            (0, wait_1.iptablesCleanup)();
+            core.info('Installing LXC');
+            (0, wait_1.installLxc)();
+            core.info(`Starting ${dist} ${release} container`);
+            (0, wait_1.startContainer)(name, dist, release);
             core.setOutput('ip', '127.0.0.1');
         }
         catch (error) {
@@ -87,17 +90,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
 function exec(command) {
@@ -126,19 +120,24 @@ function stopDocker() {
 }
 exports.stopDocker = stopDocker;
 function iptablesCleanup() {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(() => {
-            exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
-            exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
-            exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
-            exec(['sudo', 'iptables', '-F']);
-            exec(['sudo', 'iptables', '-X']);
-            exec(['sudo', 'iptables', '-t', 'nat', '-F']);
-            exec(['sudo', 'iptables', '-t', 'nat', '-X']);
-        });
-    });
+    exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
+    exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
+    exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
+    exec(['sudo', 'iptables', '-F']);
+    exec(['sudo', 'iptables', '-X']);
+    exec(['sudo', 'iptables', '-t', 'nat', '-F']);
+    exec(['sudo', 'iptables', '-t', 'nat', '-X']);
 }
 exports.iptablesCleanup = iptablesCleanup;
+function installLxc() {
+    exec(['sudo', 'apt', 'install', 'lxc']);
+}
+exports.installLxc = installLxc;
+function startContainer(name, dist, release) {
+    exec(['sudo', 'lxc-create', '-t', 'download', '-n', name, '--', '--dist', dist, '--release', release, '--arch', 'amd64']);
+    exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
+}
+exports.startContainer = startContainer;
 
 
 /***/ }),

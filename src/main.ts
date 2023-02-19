@@ -1,18 +1,23 @@
 import * as core from '@actions/core'
-import {iptablesCleanup, stopDocker} from './wait'
+import {installLxc, iptablesCleanup, startContainer, stopDocker} from './wait'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const name: string = core.getInput('name')
+    const dist: string = core.getInput('dist')
+    const release: string = core.getInput('release')
 
-    core.debug(new Date().toTimeString())
     core.info('Stopping Docker service')
     stopDocker()
 
     core.info('Resetting iptables rules')
-    await iptablesCleanup()
-    core.debug(new Date().toTimeString())
+    iptablesCleanup()
+
+    core.info('Installing LXC')
+    installLxc()
+
+    core.info(`Starting ${dist} ${release} container`)
+    startContainer(name, dist, release)
 
     core.setOutput('ip', '127.0.0.1')
   } catch (error) {

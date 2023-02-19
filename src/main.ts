@@ -15,6 +15,7 @@ async function run(): Promise<void> {
 
     core.setOutput('ip', '127.0.0.1')
   } catch (error) {
+    core.error(`error: ${error}`)
     if (error instanceof Error) {
       core.setFailed(error.message)
     }

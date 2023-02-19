@@ -43,6 +43,7 @@ function run() {
             const name = core.getInput('name');
             const dist = core.getInput('dist');
             const release = core.getInput('release');
+            const configureEtcHost = core.getInput('configure-etc-hosts');
             core.info('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
             core.info('Resetting iptables rules');
@@ -51,7 +52,14 @@ function run() {
             yield (0, wait_1.installLxc)();
             core.info(`Starting ${dist} ${release} container`);
             yield (0, wait_1.startContainer)(name, dist, release);
-            core.setOutput('ip', '127.0.0.1');
+            core.info(`Get IP address of container`);
+            const ip = yield (0, wait_1.getIp)(name);
+            core.info(ip);
+            core.setOutput('ip', ip);
+            if (configureEtcHost) {
+                core.info('Configuring /etc/hosts');
+                yield (0, wait_1.setHost)(name, ip);
+            }
         }
         catch (error) {
             core.error(`error: ${error}`);
@@ -100,7 +108,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
 function exec(command) {
@@ -129,27 +137,6 @@ function exec(command) {
                 resolve();
             });
         });
-    });
-}
-function getIp(name) {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
-        let ip = undefined;
-        while (!ip) {
-            const info = yield new Promise(resolve => {
-                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], (error, stdout) => {
-                    if (error) {
-                        throw error;
-                    }
-                    core.debug(`Successfully called lxc-info: ${stdout}`);
-                    resolve(stdout.toString());
-                });
-            });
-            // Check if we already have an IP
-            const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
-            ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
-        }
-        return ip;
     });
 }
 function stopDocker() {
@@ -182,11 +169,38 @@ function startContainer(name, dist, release) {
         const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64'];
         yield exec(create.concat(lxcdist));
         yield exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
-        const ip = yield getIp(name);
-        core.info(`Container IP address: ${ip}`);
     });
 }
 exports.startContainer = startContainer;
+function getIp(name) {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        let ip = undefined;
+        while (!ip) {
+            const info = yield new Promise(resolve => {
+                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], (error, stdout) => {
+                    if (error) {
+                        throw error;
+                    }
+                    core.debug(`Successfully called lxc-info: ${stdout}`);
+                    resolve(stdout.toString());
+                });
+            });
+            // Check if we already have an IP
+            const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
+            ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
+        }
+        return ip;
+    });
+}
+exports.getIp = getIp;
+function setHost(name, ip) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const cmd = `echo "${ip}  ${name}" >> /etc/hosts`;
+        yield exec(['sudo', 'bash', '-c', cmd]);
+    });
+}
+exports.setHost = setHost;
 
 
 /***/ }),

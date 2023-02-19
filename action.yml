@@ -14,9 +14,9 @@ inputs:
     required: true
     description: Container name
     default: test
-  hostname:
+  configure-etc-hosts:
     required: true
-    description: If to configure the hostname
+    description: If to configure the container name and IP address in /etc/hosts
     default: true
   ssh:
     required: false

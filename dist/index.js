@@ -43,7 +43,10 @@ function run() {
             const ms = core.getInput('milliseconds');
             core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
             core.debug(new Date().toTimeString());
+            core.info('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
+            core.info('Resetting iptables rules');
+            yield (0, wait_1.iptablesCleanup)();
             core.debug(new Date().toTimeString());
             core.setOutput('ip', '127.0.0.1');
         }
@@ -75,7 +78,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.stopDocker = void 0;
+exports.iptablesCleanup = exports.stopDocker = void 0;
 const child_process_1 = __nccwpck_require__(129);
 function exec(command) {
     // We need at least one argument
@@ -86,8 +89,7 @@ function exec(command) {
     const args = command.slice(1);
     (0, child_process_1.execFile)(cmd, args, (error, stdout, stderr) => {
         if (error) {
-            console.error(`error: ${error.message}`);
-            return;
+            throw error;
         }
         if (stderr) {
             console.error(`stderr: ${stderr}`);
@@ -104,6 +106,20 @@ function stopDocker() {
     });
 }
 exports.stopDocker = stopDocker;
+function iptablesCleanup() {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise(() => {
+            exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
+            exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
+            exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
+            exec(['sudo', 'iptables', '-F']);
+            exec(['sudo', 'iptables', '-X']);
+            exec(['sudo', 'iptables', '-t', 'nat', '-F']);
+            exec(['sudo', 'iptables', '-t', 'nat', '-X']);
+        });
+    });
+}
+exports.iptablesCleanup = iptablesCleanup;
 
 
 /***/ }),

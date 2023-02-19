@@ -15,8 +15,7 @@ function exec(command: string[]): void {
     args,
     (error: ExecException | null, stdout: string, stderr: string) => {
       if (error) {
-        console.error(`error: ${error.message}`)
-        return
+        throw error
       }
       if (stderr) {
         console.error(`stderr: ${stderr}`)
@@ -30,5 +29,17 @@ function exec(command: string[]): void {
 export async function stopDocker(): Promise<string> {
   return new Promise(() => {
     exec(['sudo', 'systemctl', 'stop', 'docker.service'])
+  })
+}
+
+export async function iptablesCleanup(): Promise<string> {
+  return new Promise(() => {
+    exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT'])
+    exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT'])
+    exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT'])
+    exec(['sudo', 'iptables', '-F'])
+    exec(['sudo', 'iptables', '-X'])
+    exec(['sudo', 'iptables', '-t', 'nat', '-F'])
+    exec(['sudo', 'iptables', '-t', 'nat', '-X'])
   })
 }

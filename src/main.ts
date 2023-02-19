@@ -15,26 +15,32 @@ async function run(): Promise<void> {
     const release: string = core.getInput('release')
     const configureEtcHost: string = core.getInput('configure-etc-hosts')
 
-    core.info('Stopping Docker service')
+    core.startGroup('Stopping Docker service')
     await stopDocker()
+    core.endGroup()
 
-    core.info('Resetting iptables rules')
+    core.startGroup('Resetting iptables rules')
     await iptablesCleanup()
+    core.endGroup()
 
-    core.info('Installing LXC')
+    core.startGroup('Installing LXC')
     await installLxc()
+    core.endGroup()
 
-    core.info(`Starting ${dist} ${release} container`)
+    core.startGroup(`Starting ${dist} ${release} container`)
     await startContainer(name, dist, release)
+    core.endGroup()
 
-    core.info(`Get IP address of container`)
+    core.startGroup(`Get IP address of container`)
     const ip = await getIp(name)
     core.info(ip)
     core.setOutput('ip', ip)
+    core.endGroup()
 
     if (configureEtcHost) {
-      core.info('Configuring /etc/hosts')
+      core.startGroup('Configuring /etc/hosts')
       await setHost(name, ip)
+      core.endGroup()
     }
   } catch (error) {
     core.error(`error: ${error}`)

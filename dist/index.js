@@ -44,21 +44,27 @@ function run() {
             const dist = core.getInput('dist');
             const release = core.getInput('release');
             const configureEtcHost = core.getInput('configure-etc-hosts');
-            core.info('Stopping Docker service');
+            core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
-            core.info('Resetting iptables rules');
+            core.endGroup();
+            core.startGroup('Resetting iptables rules');
             yield (0, wait_1.iptablesCleanup)();
-            core.info('Installing LXC');
+            core.endGroup();
+            core.startGroup('Installing LXC');
             yield (0, wait_1.installLxc)();
-            core.info(`Starting ${dist} ${release} container`);
+            core.endGroup();
+            core.startGroup(`Starting ${dist} ${release} container`);
             yield (0, wait_1.startContainer)(name, dist, release);
-            core.info(`Get IP address of container`);
+            core.endGroup();
+            core.startGroup(`Get IP address of container`);
             const ip = yield (0, wait_1.getIp)(name);
             core.info(ip);
             core.setOutput('ip', ip);
+            core.endGroup();
             if (configureEtcHost) {
-                core.info('Configuring /etc/hosts');
+                core.startGroup('Configuring /etc/hosts');
                 yield (0, wait_1.setHost)(name, ip);
+                core.endGroup();
             }
         }
         catch (error) {
@@ -126,14 +132,8 @@ function exec(command) {
             if (stderr) {
                 core.warning(`stderr: ${stderr}`);
             }
-            if (stdout) {
-                core.startGroup(`Successfully executed ${command.join(' ')}`);
-                core.info(stdout);
-                core.endGroup();
-            }
-            else {
-                core.info(`Successfully executed ${command.join(' ')}`);
-            }
+            core.info(`Successfully executed ${command.join(' ')}`);
+            core.info(stdout);
         });
         return new Promise(resolve => {
             child.on('close', code => {

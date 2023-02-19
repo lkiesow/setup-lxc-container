@@ -19,13 +19,8 @@ async function exec(command: string[]): Promise<void> {
       if (stderr) {
         core.warning(`stderr: ${stderr}`)
       }
-      if (stdout) {
-        core.startGroup(`Successfully executed ${command.join(' ')}`)
-        core.info(stdout)
-        core.endGroup()
-      } else {
-        core.info(`Successfully executed ${command.join(' ')}`)
-      }
+      core.info(`Successfully executed ${command.join(' ')}`)
+      core.info(stdout)
     }
   )
   return new Promise(resolve => {

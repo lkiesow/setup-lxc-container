@@ -1,11 +1,34 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: LXC Setup
+description: Setup an LXC Container on GitHub Actions
+author: Lars Kiesow
 inputs:
-  milliseconds: # change this
+  dist:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: LXC distribution template
+    default: centos
+  release:
+    required: true
+    description: Distribution release
+    default: 9-Stream
+  name:
+    required: true
+    description: Container name
+    default: test
+  hostname:
+    required: true
+    description: If to configure the hostname
+    default: true
+  ssh:
+    required: false
+    description: If to configure an SSH key
+  lxcinit:
+    required: false
+    description: >
+      Commands to use for setting up the container (e.g. configure SSH).
+      Can be set to `auto` for some distributions.
+outputs:
+  ip:
+    description: IP address of the container that was set up.
 runs:
-  using: 'node16'
-  main: 'dist/index.js'
+  using: node18
+  main: dist/index.js

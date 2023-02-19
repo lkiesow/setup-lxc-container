@@ -1,9 +1,17 @@
-export async function wait(milliseconds: number): Promise<string> {
-  return new Promise(resolve => {
-    if (isNaN(milliseconds)) {
-      throw new Error('milliseconds not a number')
-    }
+const { exec } = require("child_process");
 
-    setTimeout(() => resolve('done!'), milliseconds)
+export async function stopDocker(): Promise<string> {
+  return new Promise(resolve => {
+    exec('sudo systemctl stop docker.service', (error, stdout, stderr) => {
+      if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+      }
+      if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+      }
+      console.log(`stdout: ${stdout}`);
+    });
   })
 }

@@ -44,13 +44,13 @@ function run() {
             const dist = core.getInput('dist');
             const release = core.getInput('release');
             core.info('Stopping Docker service');
-            (0, wait_1.stopDocker)();
+            yield (0, wait_1.stopDocker)();
             core.info('Resetting iptables rules');
-            (0, wait_1.iptablesCleanup)();
+            yield (0, wait_1.iptablesCleanup)();
             core.info('Installing LXC');
-            (0, wait_1.installLxc)();
+            yield (0, wait_1.installLxc)();
             core.info(`Starting ${dist} ${release} container`);
-            (0, wait_1.startContainer)(name, dist, release);
+            yield (0, wait_1.startContainer)(name, dist, release);
             core.setOutput('ip', '127.0.0.1');
         }
         catch (error) {
@@ -124,8 +124,11 @@ function exec(command) {
                 core.info(`stdout: ${stdout}`);
             }
         });
-        return new Promise((resolve) => {
-            child.on('close', resolve);
+        return new Promise(resolve => {
+            child.on('close', code => {
+                core.debug(`child process close all stdio with code ${code}`);
+                resolve();
+            });
         });
     });
 }

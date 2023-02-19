@@ -8,16 +8,16 @@ async function run(): Promise<void> {
     const release: string = core.getInput('release')
 
     core.info('Stopping Docker service')
-    stopDocker()
+    await stopDocker()
 
     core.info('Resetting iptables rules')
-    iptablesCleanup()
+    await iptablesCleanup()
 
     core.info('Installing LXC')
-    installLxc()
+    await installLxc()
 
     core.info(`Starting ${dist} ${release} container`)
-    startContainer(name, dist, release)
+    await startContainer(name, dist, release)
 
     core.setOutput('ip', '127.0.0.1')
   } catch (error) {

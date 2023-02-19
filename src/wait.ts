@@ -46,7 +46,7 @@ export async function iptablesCleanup(): Promise<void> {
 }
 
 export async function installLxc(): Promise<void> {
-  await exec(['sudo', 'apt', 'install', 'lxc'])
+  await exec(['sudo', 'apt-get', 'install', 'lxc'])
 }
 
 export async function startContainer(

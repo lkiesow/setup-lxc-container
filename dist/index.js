@@ -163,7 +163,7 @@ function iptablesCleanup() {
 exports.iptablesCleanup = iptablesCleanup;
 function installLxc() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'apt', 'install', 'lxc']);
+        yield exec(['sudo', 'apt-get', 'install', 'lxc']);
     });
 }
 exports.installLxc = installLxc;

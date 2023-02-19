@@ -44,7 +44,7 @@ function run() {
             core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
             core.debug(new Date().toTimeString());
             core.info('Stopping Docker service');
-            yield (0, wait_1.stopDocker)();
+            (0, wait_1.stopDocker)();
             core.info('Resetting iptables rules');
             yield (0, wait_1.iptablesCleanup)();
             core.debug(new Date().toTimeString());
@@ -115,18 +115,14 @@ function exec(command) {
             core.error(`stderr: ${stderr}`);
             return;
         }
-        core.info(`Successfully executed ${command}`);
+        core.info(`Successfully executed ${command.join(' ')}`);
         if (stdout) {
             core.info(`stdout: ${stdout}`);
         }
     });
 }
 function stopDocker() {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise(() => {
-            exec(['sudo', 'systemctl', 'stop', 'docker.service']);
-        });
-    });
+    exec(['sudo', 'systemctl', 'stop', 'docker.service']);
 }
 exports.stopDocker = stopDocker;
 function iptablesCleanup() {

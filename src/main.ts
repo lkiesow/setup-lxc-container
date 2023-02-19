@@ -8,7 +8,8 @@ async function run(): Promise<void> {
 
     core.debug(new Date().toTimeString())
     core.info('Stopping Docker service')
-    await stopDocker()
+    stopDocker()
+
     core.info('Resetting iptables rules')
     await iptablesCleanup()
     core.debug(new Date().toTimeString())

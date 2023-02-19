@@ -20,7 +20,7 @@ function exec(command: string[]): void {
         core.error(`stderr: ${stderr}`)
         return
       }
-      core.info(`Successfully executed ${command}`)
+      core.info(`Successfully executed ${command.join(' ')}`)
       if (stdout) {
         core.info(`stdout: ${stdout}`)
       }
@@ -28,10 +28,8 @@ function exec(command: string[]): void {
   )
 }
 
-export async function stopDocker(): Promise<string> {
-  return new Promise(() => {
-    exec(['sudo', 'systemctl', 'stop', 'docker.service'])
-  })
+export function stopDocker(): void {
+  exec(['sudo', 'systemctl', 'stop', 'docker.service'])
 }
 
 export async function iptablesCleanup(): Promise<string> {

@@ -22,11 +22,12 @@ inputs:
     required: true
     description: If to configure an SSH key
     default: true
-  lxcinit:
+  lxc-init:
     required: false
     description: >
       Commands to use for setting up the container (e.g. configure SSH).
-      Can be set to `auto` for some distributions.
+      Setting this will overwrite in container openssh-server installation
+      for supported distributions.
 outputs:
   ip:
     description: IP address of the container that was set up.

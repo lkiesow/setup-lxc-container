@@ -115,3 +115,10 @@ export async function sshKeygen(name: string): Promise<void> {
   await exec(['bash', '-c', sh])
   await exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']))
 }
+
+export async function sshServerCentOS(name: string): Promise<void> {
+  const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
+  await exec(lxc.concat(['dnf', 'install', '-y', 'openssh-server']))
+  await exec(lxc.concat(['systemctl', 'start', 'sshd.service']))
+  await exec(lxc.concat(['systemctl', 'enable', 'sshd.service']))
+}

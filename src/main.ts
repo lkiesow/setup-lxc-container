@@ -5,6 +5,7 @@ import {
   iptablesCleanup,
   setHost,
   sshKeygen,
+  sshServerCentOS,
   startContainer,
   stopDocker
 } from './wait'
@@ -16,6 +17,7 @@ async function run(): Promise<void> {
     const release: string = core.getInput('release')
     const configureEtcHost: string = core.getInput('configure-etc-hosts')
     const configureSsh: string = core.getInput('configure-ssh')
+    const lxcInit: string = core.getInput('lxc-init')
 
     core.startGroup('Stopping Docker service')
     await stopDocker()
@@ -49,6 +51,18 @@ async function run(): Promise<void> {
       core.startGroup('Configuring SSH and generating key')
       await sshKeygen(name)
       core.endGroup()
+    }
+
+    // Automatic SSH server installation for supported distributions
+    if (!lxcInit && configureSsh) {
+      if (dist === 'centos') {
+        core.startGroup('Automatic SSH server setup for CentOS')
+        await sshServerCentOS(name)
+        core.endGroup()
+      }
+    }
+    if (lxcInit) {
+      core.error('Not yet implemented!')
     }
   } catch (error) {
     core.error(`error: ${error}`)

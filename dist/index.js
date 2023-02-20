@@ -45,6 +45,7 @@ function run() {
             const release = core.getInput('release');
             const configureEtcHost = core.getInput('configure-etc-hosts');
             const configureSsh = core.getInput('configure-ssh');
+            const lxcInit = core.getInput('lxc-init');
             core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
             core.endGroup();
@@ -71,6 +72,17 @@ function run() {
                 core.startGroup('Configuring SSH and generating key');
                 yield (0, wait_1.sshKeygen)(name);
                 core.endGroup();
+            }
+            // Automatic SSH server installation for supported distributions
+            if (!lxcInit && configureSsh) {
+                if (dist === 'centos') {
+                    core.startGroup('Automatic SSH server setup for CentOS');
+                    yield (0, wait_1.sshServerCentOS)(name);
+                    core.endGroup();
+                }
+            }
+            if (lxcInit) {
+                core.error('Not yet implemented!');
             }
         }
         catch (error) {
@@ -120,7 +132,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
 const fs_1 = __nccwpck_require__(747);
@@ -238,6 +250,15 @@ function sshKeygen(name) {
     });
 }
 exports.sshKeygen = sshKeygen;
+function sshServerCentOS(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
+        yield exec(lxc.concat(['dnf', 'install', '-y', 'openssh-server']));
+        yield exec(lxc.concat(['systemctl', 'start', 'sshd.service']));
+        yield exec(lxc.concat(['systemctl', 'enable', 'sshd.service']));
+    });
+}
+exports.sshServerCentOS = sshServerCentOS;
 
 
 /***/ }),

@@ -84,6 +84,11 @@ function run() {
             if (lxcInit) {
                 core.error('Not yet implemented!');
             }
+            if (configureEtcHost && configureSsh) {
+                core.startGroup('Import container SSH host keys');
+                yield (0, wait_1.sshKeyscan)(name);
+                core.endGroup();
+            }
         }
         catch (error) {
             core.error(`error: ${error}`);
@@ -132,7 +137,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.sshKeyscan = exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(129);
 const fs_1 = __nccwpck_require__(747);
@@ -259,6 +264,12 @@ function sshServerCentOS(name) {
     });
 }
 exports.sshServerCentOS = sshServerCentOS;
+function sshKeyscan(name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield exec(['bash', '-c', `ssh-keyscan ${name} >> ~/.ssh/known_hosts`]);
+    });
+}
+exports.sshKeyscan = sshKeyscan;
 
 
 /***/ }),

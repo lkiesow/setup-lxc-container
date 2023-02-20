@@ -122,3 +122,7 @@ export async function sshServerCentOS(name: string): Promise<void> {
   await exec(lxc.concat(['systemctl', 'start', 'sshd.service']))
   await exec(lxc.concat(['systemctl', 'enable', 'sshd.service']))
 }
+
+export async function sshKeyscan(name: string): Promise<void> {
+  await exec(['bash', '-c', `ssh-keyscan ${name} >> ~/.ssh/known_hosts`])
+}

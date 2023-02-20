@@ -5,6 +5,7 @@ import {
   iptablesCleanup,
   setHost,
   sshKeygen,
+  sshKeyscan,
   sshServerCentOS,
   startContainer,
   stopDocker
@@ -63,6 +64,12 @@ async function run(): Promise<void> {
     }
     if (lxcInit) {
       core.error('Not yet implemented!')
+    }
+
+    if (configureEtcHost && configureSsh) {
+      core.startGroup('Import container SSH host keys')
+      await sshKeyscan(name)
+      core.endGroup()
     }
   } catch (error) {
     core.error(`error: ${error}`)

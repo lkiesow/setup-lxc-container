@@ -43,7 +43,9 @@ jobs:
         uses: ./
 
       - name: IP address
-        run: echo "Container IP address: ${{ steps.lxc.outputs.ip }}"
+        run: |
+          echo 'Container IP address: ${{ steps.lxc.outputs.ip }}'
 
       - name: Test SSH
-        run: ssh test echo success
+        run: |
+          ssh test echo success

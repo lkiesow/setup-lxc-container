@@ -35,12 +35,30 @@ jobs:
   # make sure the action works on a clean machine without building
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distribution:
+          - dist: almalinux
+            version: '9'
+          - dist: centos
+            version: 9-Stream
+          - dist: fedora
+            version: '37'
+          - dist: rockylinux
+            version: '9'
+          - dist: debian
+            version: bullseye
+          - dist: ubuntu
+            version: xenial
     steps:
       - uses: actions/checkout@v3
 
       - name: Test setup-lxc-container
         id: lxc
         uses: ./
+        with:
+          dist: ${{ matrix.distribution.dist }}
+          release: ${{ matrix.distribution.version }}
 
       - name: IP address
         run: |

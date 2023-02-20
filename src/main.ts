@@ -7,6 +7,7 @@ import {
   sshKeygen,
   sshKeyscan,
   sshServerCentOS,
+  sshServerDebian,
   startContainer,
   stopDocker
 } from './wait'
@@ -56,9 +57,13 @@ async function run(): Promise<void> {
 
     // Automatic SSH server installation for supported distributions
     if (!lxcInit && configureSsh) {
-      if (dist === 'centos') {
-        core.startGroup('Automatic SSH server setup for CentOS')
+      if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
+        core.startGroup(`Automatic SSH server setup for ${dist}`)
         await sshServerCentOS(name)
+        core.endGroup()
+      } else if (['debian', 'ubuntu'].includes(dist)) {
+        core.startGroup(`Automatic SSH server setup for ${dist}`)
+        await sshServerDebian(name)
         core.endGroup()
       }
     }

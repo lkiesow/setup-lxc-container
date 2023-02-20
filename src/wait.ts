@@ -128,8 +128,9 @@ export async function sshServerDebian(name: string): Promise<void> {
   await exec(lxc.concat(['apt-get', 'update']))
   await exec(
     lxc.concat([
-      'apt-get',
+      'sudo',
       'DEBIAN_FRONTEND=noninteractive',
+      'apt-get',
       'install',
       '-yq',
       'openssh-server'

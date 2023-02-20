@@ -239,8 +239,8 @@ function sshKeygen(name) {
         // Configure SSH
         let config = '\n';
         config += `Host ${name}\n`;
-        config += '  User root';
-        config += '  IdentityFile ~/.ssh/id_ed25519';
+        config += '  User root\n';
+        config += '  IdentityFile ~/.ssh/id_ed25519\n';
         const configPath = `${home}/.ssh/config`;
         (0, fs_1.appendFileSync)(configPath, config);
         // Set key in container

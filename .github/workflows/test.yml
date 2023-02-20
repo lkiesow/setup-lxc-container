@@ -39,4 +39,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Test setup-lxc-container
+        id: lxc
         uses: ./
+
+      - name: IP address
+        run: echo "Container IP address: ${{ steps.lxc.outputs.ip }}"
+
+      - name: Test SSH
+        run: ssh test echo success

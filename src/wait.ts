@@ -126,9 +126,7 @@ export async function sshServerCentOS(name: string): Promise<void> {
 export async function sshServerDebian(name: string): Promise<void> {
   const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
   await exec(lxc.concat(['apt-get', 'update']))
-  await exec(lxc.concat(['apt-get', 'install', '-yq', 'apt-utils']))
   await exec(lxc.concat(['apt-get', 'install', '-yq', 'openssh-server']))
-  await exec(lxc.concat(['systemctl', 'enable', 'sshd.service']))
 }
 
 export async function sshKeyscan(name: string): Promise<void> {

@@ -100,7 +100,6 @@ function run() {
             }
         }
         catch (error) {
-            core.error(`error: ${error}`);
             if (error instanceof Error) {
                 core.setFailed(error.message);
             }

@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
-import {appendFileSync, writeFileSync} from 'fs'
+import {appendFileSync} from 'fs'
 import {homedir} from 'os'
 import {randomBytes} from 'crypto'
 
@@ -139,7 +139,7 @@ export async function init(name: string, script: string): Promise<void> {
   const lxcpath = `/tmp/lxc-init-${filename}`
   const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`
   await exec(['sudo', 'install', '-m', '0777', '/dev/null', path])
-  writeFileSync(path, `#!/bin/sh\n\n${script}`)
+  appendFileSync(path, `#!/bin/sh\n\n${script}`)
   core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`)
 
   // Run script

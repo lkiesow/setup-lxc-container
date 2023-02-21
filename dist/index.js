@@ -54,8 +54,8 @@ function run() {
             const name = core.getInput('name');
             const dist = core.getInput('dist');
             const release = core.getInput('release');
-            const configureEtcHost = core.getBooleanInput('configure-etc-hosts');
-            const configureSsh = core.getBooleanInput('configure-ssh');
+            const cfgHost = core.getBooleanInput('configure-etc-hosts');
+            const cfgSsh = core.getBooleanInput('configure-ssh') && cfgHost;
             const lxcInit = core.getInput('lxc-init');
             core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
@@ -74,12 +74,12 @@ function run() {
             core.info(ip);
             core.setOutput('ip', ip);
             core.endGroup();
-            if (configureEtcHost) {
+            if (cfgHost) {
                 core.startGroup('Configuring /etc/hosts');
                 yield (0, wait_1.setHost)(name, ip);
                 core.endGroup();
             }
-            if (configureEtcHost && configureSsh) {
+            if (cfgSsh) {
                 core.startGroup('Configuring SSH and generating key');
                 yield (0, wait_1.sshKeygen)(name);
                 core.endGroup();
@@ -88,7 +88,7 @@ function run() {
             if (lxcInit) {
                 script = lxcInit;
             }
-            else if (configureSsh) {
+            else if (cfgSsh) {
                 // Automatic SSH server installation for supported distributions
                 if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
                     core.info(`Configuring automatic SSH server setup for ${dist}`);
@@ -104,7 +104,7 @@ function run() {
                 yield (0, wait_1.init)(name, script);
                 core.endGroup();
             }
-            if (configureEtcHost && configureSsh) {
+            if (cfgSsh) {
                 core.startGroup('Import container SSH host keys');
                 yield (0, wait_1.sshKeyscan)(name);
                 core.endGroup();

@@ -1,105 +1,121 @@
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+# GitHub Actions to Setup an LXC Container
 
-# Create a JavaScript Action using TypeScript
+This actions will create a fresh LXC container on GitHub actions you can then work with.
+It provide a clean, virtual machine like environment with an init system
+based on many different Linux distributions to choose from.
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+For example, this is a great way to test Ansible roles or playbooks.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+## Usage
 
-## Create an action from this template
-
-Click the `Use this Template` and provide the new repo details for your action
-
-## Code in Main
-
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
-
-Install the dependencies  
-```bash
-$ npm install
-```
-
-Build the typescript and package it for distribution
-```bash
-$ npm run build && npm run package
-```
-
-Run the tests :heavy_check_mark:  
-```bash
-$ npm test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
-```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ npm run package
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
 
 ```yaml
-uses: ./
-with:
-  milliseconds: 1000
+- uses: lkiesow/setup-lxc-container@main
+  with:
+    # LXC distribution to use
+    # Default: centos
+    dist: centos
+
+    # Distribution release to use
+    # Default: 9-Stream
+    release: 9-Stream
+
+    # LXC container name.
+    # Will also be used as hostname in /etc/hosts if configure-etc-hosts is set.
+    # Default: test
+    name: test
+
+    # If to configure the container name and IP address in /etc/hosts.
+    # This allows you to address the container by name when using network
+    # commands like `ping test`.
+    # This is required for the automatic SSH configuration and disavling this
+    # will automatically disable `configure-ssh`.
+    # Default: true
+    configure-etc-hosts: true
+
+    # If to configure SSH. If enabled, this will:
+    # - Generate an SSH key on the host
+    # - Set the key as authorized key in the container
+    # - Set `lxc-init` to automatically install and enable `openssh-server` for
+    #   supported distributions
+    # - Import container SSH server keys
+    # Default: true
+    configure-ssh: true
+
+    # Commands to use for setting up the container (e.g. configure SSH).
+    # Setting this will overwrite in-container openssh-server installation
+    # for supported distributions. If you set this and have `configure-ssh`
+    # enabled, make sure to set up an SSH server.
+    #lxc-init:
 ```
 
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
+## Example Workflow
 
-## Usage:
+A simple workflow to set up a container,
+get the container's IP address
+and run a command in the container via `ssh`:
 
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action
+```yaml
+name: Test
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: lkiesow/setup-lxc-container@main
+        id: lxc
+        with:
+          dist: debian
+          release: bullseye
+
+      - name: IP address
+        run: |
+          echo 'Container IP address: ${{ steps.lxc.outputs.ip }}'
+
+      - name: Test SSH
+        run: |
+          ssh test echo success
+```
+
+
+## Docker Incompatibility
+
+This action is incompatible with using Docker on GitHub Actions.
+The action will disable the docker service.
+Do not try using LXC and Docker in one job.
+
+
+## Automatic SSH Server Setup
+
+The action contains instructions to automatically install and enable an OpenSSH
+server on several distributions. Use the `lxc-init` option to overwrite the
+setup steps or to set up an OpenSSH server on non-supported distributions.
+
+Supported are recent versions of:
+
+- almalinux
+- centos
+- debian
+- fedora
+- rockylinux
+- ubuntu
+
+
+## Supported Distributions
+
+To get the full list of available distribution and release templates,
+install LXC and run:
+
+```
+❯ apt install lxc
+❯ lxc-create --template download --name tmp
+❯ lxc-destroy --name tmp
+```
+
+## Knows Issues
+
+- The Ubuntu Xenial LXC container does not want to start up properly on GitHub
+  Actions. Ubuntu Focal works just fine.

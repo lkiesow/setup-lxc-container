@@ -25,10 +25,8 @@ async function run(): Promise<void> {
     const name: string = core.getInput('name')
     const dist: string = core.getInput('dist')
     const release: string = core.getInput('release')
-    const configureEtcHost: boolean = core.getBooleanInput(
-      'configure-etc-hosts'
-    )
-    const configureSsh: boolean = core.getBooleanInput('configure-ssh')
+    const cfgHost: boolean = core.getBooleanInput('configure-etc-hosts')
+    const cfgSsh: boolean = core.getBooleanInput('configure-ssh') && cfgHost
     const lxcInit: string = core.getInput('lxc-init')
 
     core.startGroup('Stopping Docker service')
@@ -53,13 +51,13 @@ async function run(): Promise<void> {
     core.setOutput('ip', ip)
     core.endGroup()
 
-    if (configureEtcHost) {
+    if (cfgHost) {
       core.startGroup('Configuring /etc/hosts')
       await setHost(name, ip)
       core.endGroup()
     }
 
-    if (configureEtcHost && configureSsh) {
+    if (cfgSsh) {
       core.startGroup('Configuring SSH and generating key')
       await sshKeygen(name)
       core.endGroup()
@@ -68,7 +66,7 @@ async function run(): Promise<void> {
     let script = ''
     if (lxcInit) {
       script = lxcInit
-    } else if (configureSsh) {
+    } else if (cfgSsh) {
       // Automatic SSH server installation for supported distributions
       if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
         core.info(`Configuring automatic SSH server setup for ${dist}`)
@@ -84,7 +82,7 @@ async function run(): Promise<void> {
       core.endGroup()
     }
 
-    if (configureEtcHost && configureSsh) {
+    if (cfgSsh) {
       core.startGroup('Import container SSH host keys')
       await sshKeyscan(name)
       core.endGroup()

@@ -63,8 +63,8 @@ export async function startContainer(
 }
 
 export async function getIp(name: string): Promise<string> {
-  let ip: string | undefined = undefined
-  while (!ip) {
+  // Wait up to 20 seconds to get IP address
+  for (let i = 0; i < 200; i++) {
     const info: string = await new Promise(resolve => {
       execFile(
         'sudo',
@@ -79,16 +79,20 @@ export async function getIp(name: string): Promise<string> {
       )
     })
 
-    // Check if we already have an IP
+    // Check if the container has an IP address
     const ipInfo = info.split('\n').filter((l: string) => l.startsWith('IP'))
-    ip = ipInfo?.[0]?.split(/  */)?.[1]
+    const ip = ipInfo?.[0]?.split(/  */)?.[1]
 
-    if (!ip) {
-      // Sleep 100ms before retry
-      await new Promise(resolve => setTimeout(resolve, 100))
+    if (ip) {
+      return ip
     }
+
+    // Sleep 100ms before retry
+    await new Promise(resolve => setTimeout(resolve, 100))
   }
-  return ip
+
+  // We did not get an IP after 200 tries (~20 sec)
+  throw new Error('Container failed to get IP address')
 }
 
 export async function setHost(name: string, ip: string): Promise<void> {

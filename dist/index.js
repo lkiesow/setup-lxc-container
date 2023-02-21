@@ -217,8 +217,8 @@ exports.startContainer = startContainer;
 function getIp(name) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
-        let ip = undefined;
-        while (!ip) {
+        // Wait up to 20 seconds to get IP address
+        for (let i = 0; i < 200; i++) {
             const info = yield new Promise(resolve => {
                 (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], (error, stdout) => {
                     if (error) {
@@ -228,15 +228,17 @@ function getIp(name) {
                     resolve(stdout.toString());
                 });
             });
-            // Check if we already have an IP
+            // Check if the container has an IP address
             const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
-            ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
-            if (!ip) {
-                // Sleep 100ms before retry
-                yield new Promise(resolve => setTimeout(resolve, 100));
+            const ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
+            if (ip) {
+                return ip;
             }
+            // Sleep 100ms before retry
+            yield new Promise(resolve => setTimeout(resolve, 100));
         }
-        return ip;
+        // We did not get an IP after 200 tries (~20 sec)
+        throw new Error('Container failed to get IP address');
     });
 }
 exports.getIp = getIp;

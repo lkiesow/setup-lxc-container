@@ -126,19 +126,12 @@ export async function sshKeygen(name: string): Promise<void> {
   await exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']))
 }
 
-export async function sshServerCentOS(name: string): Promise<void> {
-  const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
-  await exec(lxc.concat(['dnf', 'install', '-y', 'openssh-server']))
-  await exec(lxc.concat(['systemctl', 'start', 'sshd.service']))
-  await exec(lxc.concat(['systemctl', 'enable', 'sshd.service']))
-}
-
 export async function init(name: string, script: string): Promise<void> {
   // Turn sctipt into executable
   const filename = randomBytes(20).toString('hex')
   const tmp = `/tmp/lxc-init-${filename}`
   const path = `/var/lib/lxc/${name}/rootfs${tmp}`
-  writeFileSync(tmp, `#!/bin/sh\n\n${script}`, {mode: 0o777})
+  writeFileSync(tmp, `#!/bin/sh\nset -o xtrace\n${script}`, {mode: 0o777})
   core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`)
 
   // Move script into container

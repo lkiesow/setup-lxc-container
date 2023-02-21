@@ -7,10 +7,18 @@ import {
   setHost,
   sshKeygen,
   sshKeyscan,
-  sshServerCentOS,
   startContainer,
   stopDocker
 } from './wait'
+
+const INIT_CENTOS = `
+dnf install -y openssh-server
+systemctl start sshd.service
+systemctl enable sshd.service`
+
+const INIT_DEBIAN = `
+apt-get update
+apt-get install -yq openssh-server`
 
 async function run(): Promise<void> {
   try {
@@ -55,21 +63,23 @@ async function run(): Promise<void> {
       core.endGroup()
     }
 
-    // Automatic SSH server installation for supported distributions
-    if (!lxcInit && configureSsh) {
+    let script = ''
+    if (lxcInit) {
+      script = lxcInit
+    } else if (configureSsh) {
+      // Automatic SSH server installation for supported distributions
       if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
-        core.startGroup(`Automatic SSH server setup for ${dist}`)
-        await sshServerCentOS(name)
-        core.endGroup()
+        core.info(`Configuring automatic SSH server setup for ${dist}`)
+        script = INIT_CENTOS
       } else if (['debian', 'ubuntu'].includes(dist)) {
-        core.startGroup(`Automatic SSH server setup for ${dist}`)
-        const script = 'apt-get update\napt-get install -yq openssh-server'
-        await init(name, script)
-        core.endGroup()
+        core.info(`Configuring automatic SSH server setup for ${dist}`)
+        script = INIT_DEBIAN
       }
     }
-    if (lxcInit) {
-      core.error('Not yet implemented!')
+    if (script) {
+      core.startGroup(`Running initialization script`)
+      await init(name, script)
+      core.endGroup()
     }
 
     if (configureEtcHost && configureSsh) {

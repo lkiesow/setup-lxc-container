@@ -290,7 +290,8 @@ function init(name, script) {
         const filename = (0, crypto_1.randomBytes)(20).toString('hex');
         const lxcpath = `/tmp/lxc-init-${filename}`;
         const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`;
-        (0, fs_1.writeFileSync)(path, `#!/bin/sh\n\n${script}`, { mode: 0o755 });
+        yield exec(['sudo', 'install', '-m', '0777', '/dev/null', path]);
+        (0, fs_1.writeFileSync)(path, `#!/bin/sh\n\n${script}`);
         core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`);
         // Run script
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];

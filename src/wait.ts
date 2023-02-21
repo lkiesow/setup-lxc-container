@@ -131,7 +131,7 @@ export async function init(name: string, script: string): Promise<void> {
   const filename = randomBytes(20).toString('hex')
   const tmp = `/tmp/lxc-init-${filename}`
   const path = `/var/lib/lxc/${name}/rootfs${tmp}`
-  writeFileSync(tmp, `#!/bin/sh\nset -o xtrace\n${script}`, {mode: 0o777})
+  writeFileSync(tmp, `#!/bin/sh\n\n${script}`, {mode: 0o777})
   core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`)
 
   // Move script into container
@@ -139,6 +139,7 @@ export async function init(name: string, script: string): Promise<void> {
   core.debug(`Moved ${tmp} to ${path}`)
 
   // Run script
+  core.info(`Executing:\n${script}`)
   const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
   await exec(lxc.concat([tmp]))
 }

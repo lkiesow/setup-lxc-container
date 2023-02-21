@@ -291,12 +291,13 @@ function init(name, script) {
         const filename = (0, crypto_1.randomBytes)(20).toString('hex');
         const tmp = `/tmp/lxc-init-${filename}`;
         const path = `/var/lib/lxc/${name}/rootfs${tmp}`;
-        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\nset -o xtrace\n${script}`, { mode: 0o777 });
+        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
         core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`);
         // Move script into container
         yield exec(['sudo', 'mv', tmp, path]);
         core.debug(`Moved ${tmp} to ${path}`);
         // Run script
+        core.info(`Executing:\n${script}`);
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
         yield exec(lxc.concat([tmp]));
     });

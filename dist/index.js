@@ -54,8 +54,8 @@ function run() {
             const name = core.getInput('name');
             const dist = core.getInput('dist');
             const release = core.getInput('release');
-            const configureEtcHost = core.getInput('configure-etc-hosts');
-            const configureSsh = core.getInput('configure-ssh');
+            const configureEtcHost = core.getBooleanInput('configure-etc-hosts');
+            const configureSsh = core.getBooleanInput('configure-ssh');
             const lxcInit = core.getInput('lxc-init');
             core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
@@ -288,18 +288,20 @@ exports.sshKeygen = sshKeygen;
 function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
         // Turn sctipt into executable
-        const filename = (0, crypto_1.randomBytes)(20).toString('hex');
-        const tmp = `/tmp/lxc-init-${filename}`;
-        const path = `/var/lib/lxc/${name}/rootfs${tmp}`;
-        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
-        core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`);
+        const random = (0, crypto_1.randomBytes)(20).toString('hex');
+        const filename = `/lxc-init-${random}`;
+        const path = `/var/lib/lxc/${name}/rootfs/${filename}`;
+        (0, fs_1.writeFileSync)(`/tmp${filename}`, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
+        core.debug(`Wrote /tmp${filename}:\n\n#!/bin/sh\n\n${script}`);
         // Move script into container
-        yield exec(['sudo', 'mv', tmp, path]);
-        core.debug(`Moved ${tmp} to ${path}`);
+        yield exec(['sudo', 'mv', `/tmp${filename}`, path]);
+        core.debug(`Moved  /tmp${filename} to ${path}`);
         // Run script
         core.info(`Executing:\n${script}`);
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat([tmp]));
+        yield exec(lxc.concat([filename]));
+        // Remove script
+        yield exec(['sudo', 'rm', path]);
     });
 }
 exports.init = init;

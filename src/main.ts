@@ -25,8 +25,10 @@ async function run(): Promise<void> {
     const name: string = core.getInput('name')
     const dist: string = core.getInput('dist')
     const release: string = core.getInput('release')
-    const configureEtcHost: string = core.getInput('configure-etc-hosts')
-    const configureSsh: string = core.getInput('configure-ssh')
+    const configureEtcHost: boolean = core.getBooleanInput(
+      'configure-etc-hosts'
+    )
+    const configureSsh: boolean = core.getBooleanInput('configure-ssh')
     const lxcInit: string = core.getInput('lxc-init')
 
     core.startGroup('Stopping Docker service')

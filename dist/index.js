@@ -288,14 +288,16 @@ function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
         // Turn sctipt into executable
         const filename = (0, crypto_1.randomBytes)(20).toString('hex');
-        const lxcpath = `/tmp/lxc-init-${filename}`;
-        const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`;
-        yield exec(['sudo', 'install', '-m', '0777', '/dev/null', path]);
-        (0, fs_1.appendFileSync)(path, `#!/bin/sh\n\n${script}`);
-        core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`);
+        const tmp = `/tmp/lxc-init-${filename}`;
+        const path = `/var/lib/lxc/${name}/rootfs${tmp}`;
+        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
+        core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`);
+        // Move script into container
+        yield exec(['sudo', 'mv', tmp, path]);
+        core.debug(`Moved ${tmp} to ${path}`);
         // Run script
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat([lxcpath]));
+        yield exec(lxc.concat([tmp]));
     });
 }
 exports.init = init;

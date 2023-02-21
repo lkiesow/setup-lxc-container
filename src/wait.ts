@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
-import {appendFileSync} from 'fs'
+import {appendFileSync, writeFileSync} from 'fs'
 import {homedir} from 'os'
 import {randomBytes} from 'crypto'
 
@@ -136,15 +136,18 @@ export async function sshServerCentOS(name: string): Promise<void> {
 export async function init(name: string, script: string): Promise<void> {
   // Turn sctipt into executable
   const filename = randomBytes(20).toString('hex')
-  const lxcpath = `/tmp/lxc-init-${filename}`
-  const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`
-  await exec(['sudo', 'install', '-m', '0777', '/dev/null', path])
-  appendFileSync(path, `#!/bin/sh\n\n${script}`)
-  core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`)
+  const tmp = `/tmp/lxc-init-${filename}`
+  const path = `/var/lib/lxc/${name}/rootfs${tmp}`
+  writeFileSync(tmp, `#!/bin/sh\n\n${script}`, {mode: 0o777})
+  core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`)
+
+  // Move script into container
+  await exec(['sudo', 'mv', tmp, path])
+  core.debug(`Moved ${tmp} to ${path}`)
 
   // Run script
   const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
-  await exec(lxc.concat([lxcpath]))
+  await exec(lxc.concat([tmp]))
 }
 
 export async function sshKeyscan(name: string): Promise<void> {

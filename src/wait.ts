@@ -82,6 +82,11 @@ export async function getIp(name: string): Promise<string> {
     // Check if we already have an IP
     const ipInfo = info.split('\n').filter((l: string) => l.startsWith('IP'))
     ip = ipInfo?.[0]?.split(/  */)?.[1]
+
+    if (!ip) {
+      // Sleep 100ms before retry
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
   }
   return ip
 }

@@ -231,6 +231,10 @@ function getIp(name) {
             // Check if we already have an IP
             const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
             ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
+            if (!ip) {
+                // Sleep 100ms before retry
+                yield new Promise(resolve => setTimeout(resolve, 100));
+            }
         }
         return ip;
     });

@@ -11,7 +11,7 @@ For example, this is a great way to test Ansible roles or playbooks.
 
 
 ```yaml
-- uses: lkiesow/setup-lxc-container@main
+- uses: lkiesow/setup-lxc-container@v1
   with:
     # LXC distribution to use
     # Default: centos
@@ -65,7 +65,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: lkiesow/setup-lxc-container@main
+      - uses: lkiesow/setup-lxc-container@v1
         id: lxc
         with:
           dist: debian

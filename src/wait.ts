@@ -138,7 +138,8 @@ export async function init(name: string, script: string): Promise<void> {
   const filename = randomBytes(20).toString('hex')
   const lxcpath = `/tmp/lxc-init-${filename}`
   const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`
-  writeFileSync(path, `#!/bin/sh\n\n${script}`, {mode: 0o755})
+  await exec(['sudo', 'install', '-m', '0777', '/dev/null', path])
+  writeFileSync(path, `#!/bin/sh\n\n${script}`)
   core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`)
 
   // Run script

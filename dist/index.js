@@ -281,9 +281,7 @@ function sshServerDebian(name) {
     return __awaiter(this, void 0, void 0, function* () {
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
         yield exec(lxc.concat(['apt-get', 'update']));
-        yield exec(lxc.concat(['apt-get', 'install', '-yq', 'apt-utils']));
         yield exec(lxc.concat(['apt-get', 'install', '-yq', 'openssh-server']));
-        yield exec(lxc.concat(['systemctl', 'enable', 'sshd.service']));
     });
 }
 exports.sshServerDebian = sshServerDebian;

@@ -67,3 +67,8 @@ jobs:
       - name: Test SSH
         run: |
           ssh test echo success
+
+      - name: Print syslogs on failure
+        if: ${{ failure() }}
+        run: |
+          cat /var/lib/lxc/test/rootfs/var/log/syslog

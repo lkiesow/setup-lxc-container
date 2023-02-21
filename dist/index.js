@@ -41,6 +41,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const wait_1 = __nccwpck_require__(817);
+const INIT_CENTOS = `
+dnf install -y openssh-server
+systemctl start sshd.service
+systemctl enable sshd.service`;
+const INIT_DEBIAN = `
+apt-get update
+apt-get install -yq openssh-server`;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -77,22 +84,25 @@ function run() {
                 yield (0, wait_1.sshKeygen)(name);
                 core.endGroup();
             }
-            // Automatic SSH server installation for supported distributions
-            if (!lxcInit && configureSsh) {
+            let script = '';
+            if (lxcInit) {
+                script = lxcInit;
+            }
+            else if (configureSsh) {
+                // Automatic SSH server installation for supported distributions
                 if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
-                    core.startGroup(`Automatic SSH server setup for ${dist}`);
-                    yield (0, wait_1.sshServerCentOS)(name);
-                    core.endGroup();
+                    core.info(`Configuring automatic SSH server setup for ${dist}`);
+                    script = INIT_CENTOS;
                 }
                 else if (['debian', 'ubuntu'].includes(dist)) {
-                    core.startGroup(`Automatic SSH server setup for ${dist}`);
-                    const script = 'apt-get update\napt-get install -yq openssh-server';
-                    yield (0, wait_1.init)(name, script);
-                    core.endGroup();
+                    core.info(`Configuring automatic SSH server setup for ${dist}`);
+                    script = INIT_DEBIAN;
                 }
             }
-            if (lxcInit) {
-                core.error('Not yet implemented!');
+            if (script) {
+                core.startGroup(`Running initialization script`);
+                yield (0, wait_1.init)(name, script);
+                core.endGroup();
             }
             if (configureEtcHost && configureSsh) {
                 core.startGroup('Import container SSH host keys');
@@ -150,7 +160,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sshKeyscan = exports.init = exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.sshKeyscan = exports.init = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(81);
 const fs_1 = __nccwpck_require__(147);
@@ -275,22 +285,13 @@ function sshKeygen(name) {
     });
 }
 exports.sshKeygen = sshKeygen;
-function sshServerCentOS(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat(['dnf', 'install', '-y', 'openssh-server']));
-        yield exec(lxc.concat(['systemctl', 'start', 'sshd.service']));
-        yield exec(lxc.concat(['systemctl', 'enable', 'sshd.service']));
-    });
-}
-exports.sshServerCentOS = sshServerCentOS;
 function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
         // Turn sctipt into executable
         const filename = (0, crypto_1.randomBytes)(20).toString('hex');
         const tmp = `/tmp/lxc-init-${filename}`;
         const path = `/var/lib/lxc/${name}/rootfs${tmp}`;
-        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
+        (0, fs_1.writeFileSync)(tmp, `#!/bin/sh\nset -o xtrace\n${script}`, { mode: 0o777 });
         core.debug(`Wrote ${tmp}:\n\n#!/bin/sh\n\n${script}`);
         // Move script into container
         yield exec(['sudo', 'mv', tmp, path]);

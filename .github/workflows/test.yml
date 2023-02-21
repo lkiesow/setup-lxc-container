@@ -72,3 +72,22 @@ jobs:
         if: ${{ failure() }}
         run: |
           sudo lxc-attach -n test journalctl | cat
+
+  # test custom lxc-init script
+  custom-init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Test setup-lxc-container
+        id: lxc
+        uses: ./
+        with:
+          lxc-init: |
+            echo custom
+            echo init
+
+      - name: Print syslogs on failure
+        if: ${{ failure() }}
+        run: |
+          sudo lxc-attach -n test journalctl | cat

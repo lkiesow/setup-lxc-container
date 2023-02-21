@@ -86,7 +86,8 @@ function run() {
                 }
                 else if (['debian', 'ubuntu'].includes(dist)) {
                     core.startGroup(`Automatic SSH server setup for ${dist}`);
-                    yield (0, wait_1.sshServerDebian)(name);
+                    const script = 'apt-get update\napt-get install -yq openssh-server';
+                    yield (0, wait_1.init)(name, script);
                     core.endGroup();
                 }
             }
@@ -149,11 +150,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sshKeyscan = exports.sshServerDebian = exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.sshKeyscan = exports.init = exports.sshServerCentOS = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
 const core = __importStar(__nccwpck_require__(186));
 const child_process_1 = __nccwpck_require__(81);
 const fs_1 = __nccwpck_require__(147);
 const os_1 = __nccwpck_require__(37);
+const crypto_1 = __nccwpck_require__(113);
 function exec(command) {
     return __awaiter(this, void 0, void 0, function* () {
         // We need at least one argument
@@ -282,14 +284,20 @@ function sshServerCentOS(name) {
     });
 }
 exports.sshServerCentOS = sshServerCentOS;
-function sshServerDebian(name) {
+function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
+        // Turn sctipt into executable
+        const filename = (0, crypto_1.randomBytes)(20).toString('hex');
+        const lxcpath = `/tmp/lxc-init-${filename}`;
+        const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`;
+        (0, fs_1.writeFileSync)(path, `#!/bin/sh\n\n${script}`, { mode: 0o755 });
+        core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`);
+        // Run script
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat(['apt-get', 'update']));
-        yield exec(lxc.concat(['apt-get', 'install', '-yq', 'openssh-server']));
+        yield exec(lxc.concat([lxcpath]));
     });
 }
-exports.sshServerDebian = sshServerDebian;
+exports.init = init;
 function sshKeyscan(name) {
     return __awaiter(this, void 0, void 0, function* () {
         yield exec(['bash', '-c', `ssh-keyscan ${name} >> ~/.ssh/known_hosts`]);

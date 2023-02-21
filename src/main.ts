@@ -1,13 +1,13 @@
 import * as core from '@actions/core'
 import {
   getIp,
+  init,
   installLxc,
   iptablesCleanup,
   setHost,
   sshKeygen,
   sshKeyscan,
   sshServerCentOS,
-  sshServerDebian,
   startContainer,
   stopDocker
 } from './wait'
@@ -63,7 +63,8 @@ async function run(): Promise<void> {
         core.endGroup()
       } else if (['debian', 'ubuntu'].includes(dist)) {
         core.startGroup(`Automatic SSH server setup for ${dist}`)
-        await sshServerDebian(name)
+        const script = 'apt-get update\napt-get install -yq openssh-server'
+        await init(name, script)
         core.endGroup()
       }
     }

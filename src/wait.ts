@@ -1,7 +1,8 @@
 import * as core from '@actions/core'
 import {ExecException, execFile} from 'child_process'
-import {appendFileSync} from 'fs'
+import {appendFileSync, writeFileSync} from 'fs'
 import {homedir} from 'os'
+import {randomBytes} from 'crypto'
 
 async function exec(command: string[]): Promise<void> {
   // We need at least one argument
@@ -132,10 +133,17 @@ export async function sshServerCentOS(name: string): Promise<void> {
   await exec(lxc.concat(['systemctl', 'enable', 'sshd.service']))
 }
 
-export async function sshServerDebian(name: string): Promise<void> {
+export async function init(name: string, script: string): Promise<void> {
+  // Turn sctipt into executable
+  const filename = randomBytes(20).toString('hex')
+  const lxcpath = `/tmp/lxc-init-${filename}`
+  const path = `/var/lib/lxc/${name}/rootfs${lxcpath}`
+  writeFileSync(path, `#!/bin/sh\n\n${script}`, {mode: 0o755})
+  core.debug(`Wrote ${path}:\n\n#!/bin/sh\n\n${script}`)
+
+  // Run script
   const lxc = ['sudo', 'lxc-attach', '-n', name, '--']
-  await exec(lxc.concat(['apt-get', 'update']))
-  await exec(lxc.concat(['apt-get', 'install', '-yq', 'openssh-server']))
+  await exec(lxc.concat([lxcpath]))
 }
 
 export async function sshKeyscan(name: string): Promise<void> {

@@ -71,4 +71,4 @@ jobs:
       - name: Print syslogs on failure
         if: ${{ failure() }}
         run: |
-          cat /var/lib/lxc/test/rootfs/var/log/syslog
+          sudo cat /var/lib/lxc/test/rootfs/var/log/syslog

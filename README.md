@@ -43,10 +43,15 @@ For example, this is a great way to test Ansible roles or playbooks.
     # Default: true
     configure-ssh: true
 
+    # If to set `lxc-init` to automatically install Python on supported
+    # distributions.
+    # Default: true
+    python: true
+
     # Commands to use for setting up the container (e.g. configure SSH).
-    # Setting this will overwrite in-container openssh-server installation
-    # for supported distributions. If you set this and have `configure-ssh`
-    # enabled, make sure to set up an SSH server.
+    # Setting this will overwrite in-container openssh-server and python
+    # installation for supported distributions. If you set this and have
+    # `configure-ssh` enabled, make sure to set up an SSH server.
     #lxc-init:
 ```
 
@@ -95,6 +100,19 @@ server on several distributions. Use the `lxc-init` option to overwrite the
 setup steps or to set up an OpenSSH server on non-supported distributions.
 
 Supported are recent versions of:
+
+- almalinux
+- centos
+- debian
+- fedora
+- rockylinux
+- ubuntu
+
+
+## Automatic Python Installation
+
+The action contains instructions to automatically install Python on several
+distributions if you do not use `lxc-init`. Supported are recent versions of:
 
 - almalinux
 - centos

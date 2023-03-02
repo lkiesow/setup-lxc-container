@@ -68,6 +68,10 @@ jobs:
         run: |
           ssh test echo success
 
+      - name: Test Python
+        run: |
+          python -c 'print("success")'
+
       - name: Print syslogs on failure
         if: ${{ failure() }}
         run: |

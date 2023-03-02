@@ -49,7 +49,7 @@ jobs:
           - dist: debian
             version: bullseye
           - dist: ubuntu
-            version: focal
+            version: jammy
     steps:
       - uses: actions/checkout@v3
 

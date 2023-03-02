@@ -20,7 +20,11 @@ inputs:
     default: true
   configure-ssh:
     required: true
-    description: If to configure an SSH key
+    description: If to configure SSH
+    default: true
+  python:
+    required: true
+    description: If to install Python
     default: true
   lxc-init:
     required: false

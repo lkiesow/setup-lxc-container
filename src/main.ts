@@ -20,6 +20,10 @@ const INIT_DEBIAN = `
 apt-get update
 apt-get install -yq openssh-server`
 
+const PYTHON_DEBIAN = `
+apt-get update
+apt-get install -y python3`
+
 async function run(): Promise<void> {
   try {
     const name: string = core.getInput('name')
@@ -27,6 +31,7 @@ async function run(): Promise<void> {
     const release: string = core.getInput('release')
     const cfgHost: boolean = core.getBooleanInput('configure-etc-hosts')
     const cfgSsh: boolean = core.getBooleanInput('configure-ssh') && cfgHost
+    const cfgPython: boolean = core.getBooleanInput('python')
     const lxcInit: string = core.getInput('lxc-init')
 
     core.startGroup('Stopping Docker service')
@@ -66,14 +71,22 @@ async function run(): Promise<void> {
     let script = ''
     if (lxcInit) {
       script = lxcInit
-    } else if (cfgSsh) {
-      // Automatic SSH server installation for supported distributions
-      if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
-        core.info(`Configuring automatic SSH server setup for ${dist}`)
-        script = INIT_CENTOS
-      } else if (['debian', 'ubuntu'].includes(dist)) {
-        core.info(`Configuring automatic SSH server setup for ${dist}`)
-        script = INIT_DEBIAN
+    } else {
+      if (cfgSsh) {
+        // Automatic SSH server installation for supported distributions
+        if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
+          core.info(`Configuring automatic SSH server setup for ${dist}`)
+          script = INIT_CENTOS
+        } else if (['debian', 'ubuntu'].includes(dist)) {
+          core.info(`Configuring automatic SSH server setup for ${dist}`)
+          script = INIT_DEBIAN
+        }
+      }
+      if (cfgPython) {
+        if (['debian', 'ubuntu'].includes(dist)) {
+          core.info(`Automatically install Python on ${dist}`)
+          script += PYTHON_DEBIAN
+        }
       }
     }
     if (script) {

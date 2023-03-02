@@ -48,6 +48,9 @@ systemctl enable sshd.service`;
 const INIT_DEBIAN = `
 apt-get update
 apt-get install -yq openssh-server`;
+const PYTHON_DEBIAN = `
+apt-get update
+apt-get install -y python3`;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -56,6 +59,7 @@ function run() {
             const release = core.getInput('release');
             const cfgHost = core.getBooleanInput('configure-etc-hosts');
             const cfgSsh = core.getBooleanInput('configure-ssh') && cfgHost;
+            const cfgPython = core.getBooleanInput('python');
             const lxcInit = core.getInput('lxc-init');
             core.startGroup('Stopping Docker service');
             yield (0, wait_1.stopDocker)();
@@ -88,15 +92,23 @@ function run() {
             if (lxcInit) {
                 script = lxcInit;
             }
-            else if (cfgSsh) {
-                // Automatic SSH server installation for supported distributions
-                if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
-                    core.info(`Configuring automatic SSH server setup for ${dist}`);
-                    script = INIT_CENTOS;
+            else {
+                if (cfgSsh) {
+                    // Automatic SSH server installation for supported distributions
+                    if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
+                        core.info(`Configuring automatic SSH server setup for ${dist}`);
+                        script = INIT_CENTOS;
+                    }
+                    else if (['debian', 'ubuntu'].includes(dist)) {
+                        core.info(`Configuring automatic SSH server setup for ${dist}`);
+                        script = INIT_DEBIAN;
+                    }
                 }
-                else if (['debian', 'ubuntu'].includes(dist)) {
-                    core.info(`Configuring automatic SSH server setup for ${dist}`);
-                    script = INIT_DEBIAN;
+                if (cfgPython) {
+                    if (['debian', 'ubuntu'].includes(dist)) {
+                        core.info(`Automatically install Python on ${dist}`);
+                        script += PYTHON_DEBIAN;
+                    }
                 }
             }
             if (script) {

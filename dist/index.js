@@ -186,7 +186,7 @@ function exec(command) {
         }
         const cmd = command[0];
         const args = command.slice(1);
-        const child = (0, child_process_1.execFile)(cmd, args, (error, stdout, stderr) => {
+        const child = (0, child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
             if (error) {
                 throw error;
             }
@@ -194,7 +194,7 @@ function exec(command) {
                 core.warning(`stderr: ${stderr}`);
             }
             core.info(`Successfully executed ${command.join(' ')}`);
-            core.info(stdout);
+            core.info(stdout.toString());
         });
         return new Promise(resolve => {
             child.on('close', code => {
@@ -243,7 +243,7 @@ function getIp(name) {
         // Wait up to 20 seconds to get IP address
         for (let i = 0; i < 200; i++) {
             const info = yield new Promise(resolve => {
-                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], (error, stdout) => {
+                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], null, (error, stdout) => {
                     if (error) {
                         throw error;
                     }

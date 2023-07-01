@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {ExecException, execFile} from 'child_process'
+import {ExecFileException, execFile} from 'child_process'
 import {appendFileSync, writeFileSync} from 'fs'
 import {homedir} from 'os'
 import {randomBytes} from 'crypto'
@@ -15,7 +15,12 @@ async function exec(command: string[]): Promise<void> {
   const child = execFile(
     cmd,
     args,
-    (error: ExecException | null, stdout: string, stderr: string) => {
+    null,
+    (
+      error: ExecFileException | null,
+      stdout: string | Buffer,
+      stderr: string | Buffer
+    ) => {
       if (error) {
         throw error
       }
@@ -23,7 +28,7 @@ async function exec(command: string[]): Promise<void> {
         core.warning(`stderr: ${stderr}`)
       }
       core.info(`Successfully executed ${command.join(' ')}`)
-      core.info(stdout)
+      core.info(stdout.toString())
     }
   )
   return new Promise(resolve => {
@@ -70,7 +75,8 @@ export async function getIp(name: string): Promise<string> {
       execFile(
         'sudo',
         ['lxc-info', '-n', name],
-        (error: ExecException | null, stdout: string) => {
+        null,
+        (error: ExecFileException | null, stdout: string | Buffer) => {
           if (error) {
             throw error
           }

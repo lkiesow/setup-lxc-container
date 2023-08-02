@@ -132,8 +132,3 @@ install LXC and run:
 ❯ lxc-create --template download --name tmp
 ❯ lxc-destroy --name tmp
 ```
-
-## Knows Issues
-
-- The Ubuntu Xenial LXC container does not want to start up properly on GitHub
-  Actions. Ubuntu Focal works just fine.

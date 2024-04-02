@@ -42,12 +42,12 @@ jobs:
             version: '9'
           - dist: centos
             version: 9-Stream
-          - dist: fedora
-            version: '37'
           - dist: rockylinux
             version: '9'
           - dist: debian
             version: bullseye
+          - dist: debian
+            version: bookworm
           - dist: ubuntu
             version: jammy
     steps:

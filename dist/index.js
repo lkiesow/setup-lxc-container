@@ -238,8 +238,8 @@ function startContainer(name, dist, release) {
 }
 exports.startContainer = startContainer;
 function getIp(name) {
-    var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
+        var _a, _b;
         // Wait up to 20 seconds to get IP address
         for (let i = 0; i < 200; i++) {
             const info = yield new Promise(resolve => {

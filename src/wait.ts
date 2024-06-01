@@ -115,6 +115,7 @@ export async function sshKeygen(name: string): Promise<void> {
   // Generate SSH key
   const home = homedir()
   const keyPath = `${home}/.ssh/id_ed25519`
+  await exec(['install', '-dm', '700', `${home}/.ssh/`])
   await exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', ''])
 
   // Configure SSH

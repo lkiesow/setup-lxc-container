@@ -206,7 +206,8 @@ function exec(command) {
 }
 function stopDocker() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'systemctl', 'stop', 'docker.service']);
+        yield exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.socket']);
+        yield exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.service']);
     });
 }
 exports.stopDocker = stopDocker;

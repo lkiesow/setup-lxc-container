@@ -180,10 +180,11 @@ const os_1 = __nccwpck_require__(2037);
 const crypto_1 = __nccwpck_require__(6113);
 function exec(command) {
     return __awaiter(this, void 0, void 0, function* () {
-        // We need at least one argument
+        // We need at least a binary to run
         if (command.length < 1) {
             throw new Error('Need at least one argument to execute command');
         }
+        core.debug(`Executing ${command.join(' ')}`);
         const cmd = command[0];
         const args = command.slice(1);
         const child = (0, child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
@@ -194,7 +195,9 @@ function exec(command) {
                 core.warning(`stderr: ${stderr}`);
             }
             core.info(`Successfully executed ${command.join(' ')}`);
-            core.info(stdout.toString());
+            if (stdout) {
+                core.info(stdout.toString());
+            }
         });
         return new Promise(resolve => {
             child.on('close', code => {

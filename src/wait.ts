@@ -5,11 +5,12 @@ import {homedir} from 'os'
 import {randomBytes} from 'crypto'
 
 async function exec(command: string[]): Promise<void> {
-  // We need at least one argument
+  // We need at least a binary to run
   if (command.length < 1) {
     throw new Error('Need at least one argument to execute command')
   }
 
+  core.debug(`Executing ${command.join(' ')}`)
   const cmd = command[0]
   const args = command.slice(1)
   const child = execFile(
@@ -28,7 +29,9 @@ async function exec(command: string[]): Promise<void> {
         core.warning(`stderr: ${stderr}`)
       }
       core.info(`Successfully executed ${command.join(' ')}`)
-      core.info(stdout.toString())
+      if (stdout) {
+        core.info(stdout.toString())
+      }
     }
   )
   return new Promise(resolve => {

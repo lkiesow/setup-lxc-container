@@ -324,7 +324,7 @@ function init(name, script) {
 exports.init = init;
 function sshKeyscan(name) {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['bash', '-c', `ssh-keyscan ${name} >> ~/.ssh/known_hosts`]);
+        yield exec(['bash', '-c', `ssh-keyscan ${name} &> ~/.ssh/known_hosts`]);
     });
 }
 exports.sshKeyscan = sshKeyscan;

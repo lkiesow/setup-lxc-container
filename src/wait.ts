@@ -40,7 +40,8 @@ async function exec(command: string[]): Promise<void> {
 }
 
 export async function stopDocker(): Promise<void> {
-  await exec(['sudo', 'systemctl', 'stop', 'docker.service'])
+  await exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.socket'])
+  await exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.service'])
 }
 
 export async function iptablesCleanup(): Promise<void> {

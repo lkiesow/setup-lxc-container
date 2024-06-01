@@ -159,5 +159,5 @@ export async function init(name: string, script: string): Promise<void> {
 }
 
 export async function sshKeyscan(name: string): Promise<void> {
-  await exec(['bash', '-c', `ssh-keyscan ${name} >> ~/.ssh/known_hosts`])
+  await exec(['bash', '-c', `ssh-keyscan ${name} &> ~/.ssh/known_hosts`])
 }

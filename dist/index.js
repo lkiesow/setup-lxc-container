@@ -172,7 +172,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sshKeyscan = exports.init = exports.sshKeygen = exports.setHost = exports.getIp = exports.startContainer = exports.installLxc = exports.iptablesCleanup = exports.stopDocker = void 0;
+exports.stopDocker = stopDocker;
+exports.iptablesCleanup = iptablesCleanup;
+exports.installLxc = installLxc;
+exports.startContainer = startContainer;
+exports.getIp = getIp;
+exports.setHost = setHost;
+exports.sshKeygen = sshKeygen;
+exports.init = init;
+exports.sshKeyscan = sshKeyscan;
 const core = __importStar(__nccwpck_require__(2186));
 const child_process_1 = __nccwpck_require__(2081);
 const fs_1 = __nccwpck_require__(7147);
@@ -213,7 +221,6 @@ function stopDocker() {
         yield exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.service']);
     });
 }
-exports.stopDocker = stopDocker;
 function iptablesCleanup() {
     return __awaiter(this, void 0, void 0, function* () {
         yield exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
@@ -225,13 +232,11 @@ function iptablesCleanup() {
         yield exec(['sudo', 'iptables', '-t', 'nat', '-X']);
     });
 }
-exports.iptablesCleanup = iptablesCleanup;
 function installLxc() {
     return __awaiter(this, void 0, void 0, function* () {
         yield exec(['sudo', 'apt-get', 'install', 'lxc']);
     });
 }
-exports.installLxc = installLxc;
 function startContainer(name, dist, release) {
     return __awaiter(this, void 0, void 0, function* () {
         const create = ['sudo', 'lxc-create', '-t', 'download', '-n', name, '--'];
@@ -240,7 +245,6 @@ function startContainer(name, dist, release) {
         yield exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
     });
 }
-exports.startContainer = startContainer;
 function getIp(name) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, _b;
@@ -268,14 +272,12 @@ function getIp(name) {
         throw new Error('Container failed to get IP address');
     });
 }
-exports.getIp = getIp;
 function setHost(name, ip) {
     return __awaiter(this, void 0, void 0, function* () {
         const cmd = `echo "${ip}  ${name}" >> /etc/hosts`;
         yield exec(['sudo', 'bash', '-c', cmd]);
     });
 }
-exports.setHost = setHost;
 function sshKeygen(name) {
     return __awaiter(this, void 0, void 0, function* () {
         // Generate SSH key
@@ -301,7 +303,6 @@ function sshKeygen(name) {
         yield exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']));
     });
 }
-exports.sshKeygen = sshKeygen;
 function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
         // Turn sctipt into executable
@@ -321,13 +322,11 @@ function init(name, script) {
         yield exec(['sudo', 'rm', path]);
     });
 }
-exports.init = init;
 function sshKeyscan(name) {
     return __awaiter(this, void 0, void 0, function* () {
         yield exec(['bash', '-c', `ssh-keyscan ${name} &> ~/.ssh/known_hosts`]);
     });
 }
-exports.sshKeyscan = sshKeyscan;
 
 
 /***/ }),

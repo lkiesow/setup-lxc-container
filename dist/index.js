@@ -200,7 +200,14 @@ function exec(command) {
                 throw error;
             }
             if (stderr) {
-                core.warning(`stderr: ${stderr}`);
+                // Not a great solution to work around the problem that debian always throws an apt warning, but it works until
+                // this has been fixed upstream:
+                const log = stderr
+                    .toString()
+                    .startsWith('debconf: delaying package configuration')
+                    ? core.info
+                    : core.warning;
+                log(`stderr: ${stderr}`);
             }
             core.info(`Successfully executed ${command.join(' ')}`);
             if (stdout) {

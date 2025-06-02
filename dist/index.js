@@ -261,7 +261,8 @@ function iptablesCleanup() {
 }
 function installLxc() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'apt-get', 'install', 'lxc']);
+        yield exec(['sudo', 'apt-get', 'update']);
+        yield exec(['sudo', 'apt-get', 'install', '-y', 'lxc']);
     });
 }
 function startContainer(name, dist, release) {

@@ -38,17 +38,21 @@ jobs:
       matrix:
         distribution:
           - dist: almalinux
-            version: '9'
+            version: '10'
           - dist: centos
-            version: 9-Stream
+            version: 10-Stream
           - dist: rockylinux
             version: '9'
-          - dist: debian
-            version: bullseye
+          - dist: rockylinux
+            version: '10'
           - dist: debian
             version: bookworm
+          - dist: debian
+            version: trixie
           - dist: ubuntu
             version: jammy
+          - dist: ubuntu
+            version: noble
     steps:
       - uses: actions/checkout@v5
 

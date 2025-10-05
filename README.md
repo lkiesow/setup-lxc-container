@@ -74,7 +74,7 @@ jobs:
         id: lxc
         with:
           dist: debian
-          release: bullseye
+          release: trixie
 
       - name: IP address
         run: |

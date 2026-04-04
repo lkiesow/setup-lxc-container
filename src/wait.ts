@@ -75,6 +75,7 @@ export async function startContainer(
   release: string
 ): Promise<void> {
   const create = ['sudo', 'lxc-create', '-t', 'download', '-n', name, '--']
+  const nesting = ['-f', '/usr/share/lxc/config/nesting.conf']
   const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64']
   await exec(create.concat(lxcdist))
   await exec(['sudo', 'lxc-start', '--name', name, '--daemon'])

@@ -9,7 +9,7 @@ import {
   sshKeyscan,
   startContainer,
   stopDocker
-} from './wait'
+} from './wait.js'
 
 const INIT_CENTOS = `
 dnf install -y openssh-server

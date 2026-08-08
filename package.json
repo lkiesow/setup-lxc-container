@@ -1,8 +1,8 @@
 {
-  "name": "typescript-action",
+  "name": "setup-lxc-container",
   "version": "0.0.0",
   "private": true,
-  "description": "TypeScript template action",
+  "description": "Setup an LXC Container on GitHub Actions",
   "type": "module",
   "main": "lib/main.js",
   "scripts": {
@@ -15,14 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/lkiesow/setup-lxc-container.git"
   },
   "keywords": [
     "actions",
     "node",
-    "setup"
+    "lxc",
+    "container"
   ],
-  "author": "",
+  "author": "Lars Kiesow",
   "license": "MIT",
   "engines": {
     "node": ">=24"

@@ -9,7 +9,7 @@ inputs:
   release:
     required: true
     description: Distribution release
-    default: 9-Stream
+    default: 10-Stream
   name:
     required: true
     description: Container name

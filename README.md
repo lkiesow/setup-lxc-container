@@ -18,8 +18,8 @@ For example, this is a great way to test Ansible roles or playbooks.
     dist: centos
 
     # Distribution release to use
-    # Default: 9-Stream
-    release: 9-Stream
+    # Default: 10-Stream
+    release: 10-Stream
 
     # LXC container name.
     # Will also be used as hostname in /etc/hosts if configure-etc-hosts is set.

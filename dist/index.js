@@ -201,11 +201,11 @@ exports.setHost = setHost;
 exports.sshKeygen = sshKeygen;
 exports.init = init;
 exports.sshKeyscan = sshKeyscan;
+const node_child_process_1 = __nccwpck_require__(1421);
+const node_crypto_1 = __nccwpck_require__(7598);
+const node_fs_1 = __nccwpck_require__(3024);
+const node_os_1 = __nccwpck_require__(8161);
 const core = __importStar(__nccwpck_require__(7484));
-const child_process_1 = __nccwpck_require__(5317);
-const fs_1 = __nccwpck_require__(9896);
-const os_1 = __nccwpck_require__(857);
-const crypto_1 = __nccwpck_require__(6982);
 function exec(command) {
     return __awaiter(this, void 0, void 0, function* () {
         // We need at least a binary to run
@@ -215,7 +215,7 @@ function exec(command) {
         core.debug(`Executing ${command.join(' ')}`);
         const cmd = command[0];
         const args = command.slice(1);
-        const child = (0, child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
+        const child = (0, node_child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
             if (error) {
                 throw error;
             }
@@ -279,7 +279,7 @@ function getIp(name) {
         // Wait up to 20 seconds to get IP address
         for (let i = 0; i < 200; i++) {
             const info = yield new Promise(resolve => {
-                (0, child_process_1.execFile)('sudo', ['lxc-info', '-n', name], null, (error, stdout) => {
+                (0, node_child_process_1.execFile)('sudo', ['lxc-info', '-n', name], null, (error, stdout) => {
                     if (error) {
                         throw error;
                     }
@@ -289,7 +289,7 @@ function getIp(name) {
             });
             // Check if the container has an IP address
             const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
-            const ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/  */)) === null || _b === void 0 ? void 0 : _b[1];
+            const ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/ +/)) === null || _b === void 0 ? void 0 : _b[1];
             if (ip) {
                 return ip;
             }
@@ -309,7 +309,7 @@ function setHost(name, ip) {
 function sshKeygen(name) {
     return __awaiter(this, void 0, void 0, function* () {
         // Generate SSH key
-        const home = (0, os_1.homedir)();
+        const home = (0, node_os_1.homedir)();
         const keyPath = `${home}/.ssh/id_ed25519`;
         yield exec(['install', '-dm', '700', `${home}/.ssh/`]);
         yield exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', '']);
@@ -319,7 +319,7 @@ function sshKeygen(name) {
         config += '  User root\n';
         config += '  IdentityFile ~/.ssh/id_ed25519\n';
         const configPath = `${home}/.ssh/config`;
-        (0, fs_1.appendFileSync)(configPath, config);
+        (0, node_fs_1.appendFileSync)(configPath, config);
         // Set key in container
         const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
         yield exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']));
@@ -334,10 +334,10 @@ function sshKeygen(name) {
 function init(name, script) {
     return __awaiter(this, void 0, void 0, function* () {
         // Turn sctipt into executable
-        const random = (0, crypto_1.randomBytes)(20).toString('hex');
+        const random = (0, node_crypto_1.randomBytes)(20).toString('hex');
         const filename = `/lxc-init-${random}`;
         const path = `/var/lib/lxc/${name}/rootfs/${filename}`;
-        (0, fs_1.writeFileSync)(`/tmp${filename}`, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
+        (0, node_fs_1.writeFileSync)(`/tmp${filename}`, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
         core.debug(`Wrote /tmp${filename}:\n\n#!/bin/sh\n\n${script}`);
         // Move script into container
         yield exec(['sudo', 'mv', `/tmp${filename}`, path]);
@@ -26097,11 +26097,43 @@ module.exports = require("net");
 
 /***/ }),
 
+/***/ 1421:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:child_process");
+
+/***/ }),
+
+/***/ 7598:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:crypto");
+
+/***/ }),
+
 /***/ 8474:
 /***/ ((module) => {
 
 "use strict";
 module.exports = require("node:events");
+
+/***/ }),
+
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
+/***/ 8161:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:os");
 
 /***/ }),
 

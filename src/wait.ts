@@ -1,8 +1,8 @@
+import {type ExecFileException, execFile} from 'node:child_process'
+import {randomBytes} from 'node:crypto'
+import {appendFileSync, writeFileSync} from 'node:fs'
+import {homedir} from 'node:os'
 import * as core from '@actions/core'
-import {ExecFileException, execFile} from 'child_process'
-import {appendFileSync, writeFileSync} from 'fs'
-import {homedir} from 'os'
-import {randomBytes} from 'crypto'
 
 async function exec(command: string[]): Promise<void> {
   // We need at least a binary to run
@@ -100,7 +100,7 @@ export async function getIp(name: string): Promise<string> {
 
     // Check if the container has an IP address
     const ipInfo = info.split('\n').filter((l: string) => l.startsWith('IP'))
-    const ip = ipInfo?.[0]?.split(/  */)?.[1]
+    const ip = ipInfo?.[0]?.split(/ +/)?.[1]
 
     if (ip) {
       return ip

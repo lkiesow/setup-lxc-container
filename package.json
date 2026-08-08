@@ -6,9 +6,9 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write '**/*.ts'",
-    "format-check": "prettier --check '**/*.ts'",
-    "lint": "eslint .",
+    "format": "biome format --write .",
+    "format-check": "biome format .",
+    "lint": "biome lint .",
     "package": "ncc build --source-map --license licenses.txt",
     "all": "npm run build && npm run format && npm run lint && npm run package"
   },
@@ -30,17 +30,9 @@
     "@actions/core": "^1.11.1"
   },
   "devDependencies": {
-    "@eslint/compat": "^2.0.0",
+    "@biomejs/biome": "^2.5.7",
     "@types/node": "^24.13.3",
-    "@typescript-eslint/eslint-plugin": "^8.48.0",
-    "@typescript-eslint/parser": "^8.32.1",
     "@vercel/ncc": "^0.44.1",
-    "eslint": "^9.39.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-import-resolver-typescript": "^4.4.4",
-    "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-prettier": "^5.5.4",
-    "prettier": "3.8.3",
     "typescript": "^5.9.3"
   }
 }

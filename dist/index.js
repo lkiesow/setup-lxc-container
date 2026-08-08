@@ -39,15 +39,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7484));
 const wait_1 = __nccwpck_require__(6339);
@@ -61,83 +52,81 @@ apt-get install -yq openssh-server`;
 const PYTHON_DEBIAN = `
 apt-get update
 apt-get install -y python3`;
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const name = core.getInput('name');
-            const dist = core.getInput('dist');
-            const release = core.getInput('release');
-            const cfgHost = core.getBooleanInput('configure-etc-hosts');
-            const cfgSsh = core.getBooleanInput('configure-ssh') && cfgHost;
-            const cfgPython = core.getBooleanInput('python');
-            const lxcInit = core.getInput('lxc-init');
-            core.startGroup('Stopping Docker service');
-            yield (0, wait_1.stopDocker)();
+async function run() {
+    try {
+        const name = core.getInput('name');
+        const dist = core.getInput('dist');
+        const release = core.getInput('release');
+        const cfgHost = core.getBooleanInput('configure-etc-hosts');
+        const cfgSsh = core.getBooleanInput('configure-ssh') && cfgHost;
+        const cfgPython = core.getBooleanInput('python');
+        const lxcInit = core.getInput('lxc-init');
+        core.startGroup('Stopping Docker service');
+        await (0, wait_1.stopDocker)();
+        core.endGroup();
+        core.startGroup('Resetting iptables rules');
+        await (0, wait_1.iptablesCleanup)();
+        core.endGroup();
+        core.startGroup('Installing LXC');
+        await (0, wait_1.installLxc)();
+        core.endGroup();
+        core.startGroup(`Starting ${dist} ${release} container`);
+        await (0, wait_1.startContainer)(name, dist, release);
+        core.endGroup();
+        core.startGroup(`Get IP address of container`);
+        const ip = await (0, wait_1.getIp)(name);
+        core.info(ip);
+        core.setOutput('ip', ip);
+        core.endGroup();
+        if (cfgHost) {
+            core.startGroup('Configuring /etc/hosts');
+            await (0, wait_1.setHost)(name, ip);
             core.endGroup();
-            core.startGroup('Resetting iptables rules');
-            yield (0, wait_1.iptablesCleanup)();
+        }
+        if (cfgSsh) {
+            core.startGroup('Configuring SSH and generating key');
+            await (0, wait_1.sshKeygen)(name);
             core.endGroup();
-            core.startGroup('Installing LXC');
-            yield (0, wait_1.installLxc)();
-            core.endGroup();
-            core.startGroup(`Starting ${dist} ${release} container`);
-            yield (0, wait_1.startContainer)(name, dist, release);
-            core.endGroup();
-            core.startGroup(`Get IP address of container`);
-            const ip = yield (0, wait_1.getIp)(name);
-            core.info(ip);
-            core.setOutput('ip', ip);
-            core.endGroup();
-            if (cfgHost) {
-                core.startGroup('Configuring /etc/hosts');
-                yield (0, wait_1.setHost)(name, ip);
-                core.endGroup();
-            }
+        }
+        let script = '';
+        if (lxcInit) {
+            script = lxcInit;
+        }
+        else {
             if (cfgSsh) {
-                core.startGroup('Configuring SSH and generating key');
-                yield (0, wait_1.sshKeygen)(name);
-                core.endGroup();
-            }
-            let script = '';
-            if (lxcInit) {
-                script = lxcInit;
-            }
-            else {
-                if (cfgSsh) {
-                    // Automatic SSH server installation for supported distributions
-                    if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
-                        core.info(`Configuring automatic SSH server setup for ${dist}`);
-                        script = INIT_CENTOS;
-                    }
-                    else if (['debian', 'ubuntu'].includes(dist)) {
-                        core.info(`Configuring automatic SSH server setup for ${dist}`);
-                        script = INIT_DEBIAN;
-                    }
+                // Automatic SSH server installation for supported distributions
+                if (['almalinux', 'centos', 'fedora', 'rockylinux'].includes(dist)) {
+                    core.info(`Configuring automatic SSH server setup for ${dist}`);
+                    script = INIT_CENTOS;
                 }
-                if (cfgPython) {
-                    if (['debian', 'ubuntu'].includes(dist)) {
-                        core.info(`Automatically install Python on ${dist}`);
-                        script += PYTHON_DEBIAN;
-                    }
+                else if (['debian', 'ubuntu'].includes(dist)) {
+                    core.info(`Configuring automatic SSH server setup for ${dist}`);
+                    script = INIT_DEBIAN;
                 }
             }
-            if (script) {
-                core.startGroup(`Running initialization script`);
-                yield (0, wait_1.init)(name, script);
-                core.endGroup();
-            }
-            if (cfgSsh) {
-                core.startGroup('Import container SSH host keys');
-                yield (0, wait_1.sshKeyscan)(name);
-                core.endGroup();
+            if (cfgPython) {
+                if (['debian', 'ubuntu'].includes(dist)) {
+                    core.info(`Automatically install Python on ${dist}`);
+                    script += PYTHON_DEBIAN;
+                }
             }
         }
-        catch (error) {
-            if (error instanceof Error) {
-                core.setFailed(error.message);
-            }
+        if (script) {
+            core.startGroup(`Running initialization script`);
+            await (0, wait_1.init)(name, script);
+            core.endGroup();
         }
-    });
+        if (cfgSsh) {
+            core.startGroup('Import container SSH host keys');
+            await (0, wait_1.sshKeyscan)(name);
+            core.endGroup();
+        }
+    }
+    catch (error) {
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+        }
+    }
 }
 run();
 
@@ -182,15 +171,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.stopDocker = stopDocker;
 exports.iptablesCleanup = iptablesCleanup;
@@ -206,154 +186,133 @@ const node_crypto_1 = __nccwpck_require__(7598);
 const node_fs_1 = __nccwpck_require__(3024);
 const node_os_1 = __nccwpck_require__(8161);
 const core = __importStar(__nccwpck_require__(7484));
-function exec(command) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // We need at least a binary to run
-        if (command.length < 1) {
-            throw new Error('Need at least one argument to execute command');
+async function exec(command) {
+    // We need at least a binary to run
+    if (command.length < 1) {
+        throw new Error('Need at least one argument to execute command');
+    }
+    core.debug(`Executing ${command.join(' ')}`);
+    const cmd = command[0];
+    const args = command.slice(1);
+    const child = (0, node_child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
+        if (error) {
+            throw error;
         }
-        core.debug(`Executing ${command.join(' ')}`);
-        const cmd = command[0];
-        const args = command.slice(1);
-        const child = (0, node_child_process_1.execFile)(cmd, args, null, (error, stdout, stderr) => {
-            if (error) {
-                throw error;
-            }
-            if (stderr) {
-                // Not a great solution to work around the problem that debian always throws an apt warning, but it works until
-                // this has been fixed upstream:
-                const log = stderr
-                    .toString()
-                    .startsWith('debconf: delaying package configuration')
-                    ? core.info
-                    : core.warning;
-                log(`stderr: ${stderr}`);
-            }
-            core.info(`Successfully executed ${command.join(' ')}`);
-            if (stdout) {
-                core.info(stdout.toString());
-            }
-        });
-        return new Promise(resolve => {
-            child.on('close', code => {
-                core.debug(`child process close all stdio with code ${code}`);
-                resolve();
-            });
+        if (stderr) {
+            // Not a great solution to work around the problem that debian always throws an apt warning, but it works until
+            // this has been fixed upstream:
+            const log = stderr
+                .toString()
+                .startsWith('debconf: delaying package configuration')
+                ? core.info
+                : core.warning;
+            log(`stderr: ${stderr}`);
+        }
+        core.info(`Successfully executed ${command.join(' ')}`);
+        if (stdout) {
+            core.info(stdout.toString());
+        }
+    });
+    return new Promise(resolve => {
+        child.on('close', code => {
+            core.debug(`child process close all stdio with code ${code}`);
+            resolve();
         });
     });
 }
-function stopDocker() {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.socket']);
-        yield exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.service']);
-    });
+async function stopDocker() {
+    await exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.socket']);
+    await exec(['sudo', 'systemctl', '--quiet', 'stop', 'docker.service']);
 }
-function iptablesCleanup() {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
-        yield exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
-        yield exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
-        yield exec(['sudo', 'iptables', '-F']);
-        yield exec(['sudo', 'iptables', '-X']);
-        yield exec(['sudo', 'iptables', '-t', 'nat', '-F']);
-        yield exec(['sudo', 'iptables', '-t', 'nat', '-X']);
-    });
+async function iptablesCleanup() {
+    await exec(['sudo', 'iptables', '-P', 'INPUT', 'ACCEPT']);
+    await exec(['sudo', 'iptables', '-P', 'FORWARD', 'ACCEPT']);
+    await exec(['sudo', 'iptables', '-P', 'OUTPUT', 'ACCEPT']);
+    await exec(['sudo', 'iptables', '-F']);
+    await exec(['sudo', 'iptables', '-X']);
+    await exec(['sudo', 'iptables', '-t', 'nat', '-F']);
+    await exec(['sudo', 'iptables', '-t', 'nat', '-X']);
 }
-function installLxc() {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['sudo', 'apt-get', 'update']);
-        yield exec(['sudo', 'apt-get', 'install', '-y', 'lxc']);
-    });
+async function installLxc() {
+    await exec(['sudo', 'apt-get', 'update']);
+    await exec(['sudo', 'apt-get', 'install', '-y', 'lxc']);
 }
-function startContainer(name, dist, release) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const create = ['sudo', 'lxc-create', '-t', 'download', '-n', name, '--'];
-        const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64'];
-        yield exec(create.concat(lxcdist));
-        yield exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
-    });
+async function startContainer(name, dist, release) {
+    const create = ['sudo', 'lxc-create', '-t', 'download', '-n', name, '--'];
+    const lxcdist = ['--dist', dist, '--release', release, '--arch', 'amd64'];
+    await exec(create.concat(lxcdist));
+    await exec(['sudo', 'lxc-start', '--name', name, '--daemon']);
 }
-function getIp(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var _a, _b;
-        // Wait up to 20 seconds to get IP address
-        for (let i = 0; i < 200; i++) {
-            const info = yield new Promise(resolve => {
-                (0, node_child_process_1.execFile)('sudo', ['lxc-info', '-n', name], null, (error, stdout) => {
-                    if (error) {
-                        throw error;
-                    }
-                    core.debug(`Successfully called lxc-info: ${stdout}`);
-                    resolve(stdout.toString());
-                });
+async function getIp(name) {
+    // Wait up to 20 seconds to get IP address
+    for (let i = 0; i < 200; i++) {
+        const info = await new Promise(resolve => {
+            (0, node_child_process_1.execFile)('sudo', ['lxc-info', '-n', name], null, (error, stdout) => {
+                if (error) {
+                    throw error;
+                }
+                core.debug(`Successfully called lxc-info: ${stdout}`);
+                resolve(stdout.toString());
             });
-            // Check if the container has an IP address
-            const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
-            const ip = (_b = (_a = ipInfo === null || ipInfo === void 0 ? void 0 : ipInfo[0]) === null || _a === void 0 ? void 0 : _a.split(/ +/)) === null || _b === void 0 ? void 0 : _b[1];
-            if (ip) {
-                return ip;
-            }
-            // Sleep 100ms before retry
-            yield new Promise(resolve => setTimeout(resolve, 100));
+        });
+        // Check if the container has an IP address
+        const ipInfo = info.split('\n').filter((l) => l.startsWith('IP'));
+        const ip = ipInfo?.[0]?.split(/ +/)?.[1];
+        if (ip) {
+            return ip;
         }
-        // We did not get an IP after 200 tries (~20 sec)
-        throw new Error('Container failed to get IP address');
-    });
+        // Sleep 100ms before retry
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    // We did not get an IP after 200 tries (~20 sec)
+    throw new Error('Container failed to get IP address');
 }
-function setHost(name, ip) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const cmd = `echo "${ip}  ${name}" >> /etc/hosts`;
-        yield exec(['sudo', 'bash', '-c', cmd]);
-    });
+async function setHost(name, ip) {
+    const cmd = `echo "${ip}  ${name}" >> /etc/hosts`;
+    await exec(['sudo', 'bash', '-c', cmd]);
 }
-function sshKeygen(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Generate SSH key
-        const home = (0, node_os_1.homedir)();
-        const keyPath = `${home}/.ssh/id_ed25519`;
-        yield exec(['install', '-dm', '700', `${home}/.ssh/`]);
-        yield exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', '']);
-        // Configure SSH
-        let config = '\n';
-        config += `Host ${name}\n`;
-        config += '  User root\n';
-        config += '  IdentityFile ~/.ssh/id_ed25519\n';
-        const configPath = `${home}/.ssh/config`;
-        (0, node_fs_1.appendFileSync)(configPath, config);
-        // Set key in container
-        const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']));
-        // TODO: replace with something less ugly
-        let sh = 'cat ~/.ssh/id_ed25519.pub | ';
-        sh += lxc.join(' ');
-        sh += ' tee /root/.ssh/authorized_keys';
-        yield exec(['bash', '-c', sh]);
-        yield exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']));
-    });
+async function sshKeygen(name) {
+    // Generate SSH key
+    const home = (0, node_os_1.homedir)();
+    const keyPath = `${home}/.ssh/id_ed25519`;
+    await exec(['install', '-dm', '700', `${home}/.ssh/`]);
+    await exec(['ssh-keygen', '-t', 'ed25519', '-f', keyPath, '-N', '']);
+    // Configure SSH
+    let config = '\n';
+    config += `Host ${name}\n`;
+    config += '  User root\n';
+    config += '  IdentityFile ~/.ssh/id_ed25519\n';
+    const configPath = `${home}/.ssh/config`;
+    (0, node_fs_1.appendFileSync)(configPath, config);
+    // Set key in container
+    const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
+    await exec(lxc.concat(['install', '-m', '0700', '-d', '/root/.ssh/']));
+    // TODO: replace with something less ugly
+    let sh = 'cat ~/.ssh/id_ed25519.pub | ';
+    sh += lxc.join(' ');
+    sh += ' tee /root/.ssh/authorized_keys';
+    await exec(['bash', '-c', sh]);
+    await exec(lxc.concat(['chmod', '0600', '/root/.ssh/authorized_keys']));
 }
-function init(name, script) {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Turn sctipt into executable
-        const random = (0, node_crypto_1.randomBytes)(20).toString('hex');
-        const filename = `/lxc-init-${random}`;
-        const path = `/var/lib/lxc/${name}/rootfs/${filename}`;
-        (0, node_fs_1.writeFileSync)(`/tmp${filename}`, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
-        core.debug(`Wrote /tmp${filename}:\n\n#!/bin/sh\n\n${script}`);
-        // Move script into container
-        yield exec(['sudo', 'mv', `/tmp${filename}`, path]);
-        core.debug(`Moved  /tmp${filename} to ${path}`);
-        // Run script
-        core.info(`Executing:\n${script}`);
-        const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
-        yield exec(lxc.concat([filename]));
-        // Remove script
-        yield exec(['sudo', 'rm', path]);
-    });
+async function init(name, script) {
+    // Turn sctipt into executable
+    const random = (0, node_crypto_1.randomBytes)(20).toString('hex');
+    const filename = `/lxc-init-${random}`;
+    const path = `/var/lib/lxc/${name}/rootfs/${filename}`;
+    (0, node_fs_1.writeFileSync)(`/tmp${filename}`, `#!/bin/sh\n\n${script}`, { mode: 0o777 });
+    core.debug(`Wrote /tmp${filename}:\n\n#!/bin/sh\n\n${script}`);
+    // Move script into container
+    await exec(['sudo', 'mv', `/tmp${filename}`, path]);
+    core.debug(`Moved  /tmp${filename} to ${path}`);
+    // Run script
+    core.info(`Executing:\n${script}`);
+    const lxc = ['sudo', 'lxc-attach', '-n', name, '--'];
+    await exec(lxc.concat([filename]));
+    // Remove script
+    await exec(['sudo', 'rm', path]);
 }
-function sshKeyscan(name) {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec(['bash', '-c', `ssh-keyscan ${name} &> ~/.ssh/known_hosts`]);
-    });
+async function sshKeyscan(name) {
+    await exec(['bash', '-c', `ssh-keyscan ${name} &> ~/.ssh/known_hosts`]);
 }
 
 

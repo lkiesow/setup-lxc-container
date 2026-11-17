@@ -19427,14 +19427,29 @@ async function getIp(name) {
         }
       );
     });
-    const ipInfo = info2.split("\n").filter((l) => l.startsWith("IP"));
-    const ip = ipInfo?.[0]?.split(/ +/)?.[1];
+    const ip = info2.split("\n").filter((l) => l.startsWith("IP")).map((l) => l.split(/ +/)?.[1]).find((a) => a && !a.includes(":"));
     if (ip) {
       return ip;
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error("Container failed to get IP address");
+  throw new Error("Container failed to get IPv4 address");
+}
+async function waitForNetwork(name) {
+  const cmd = ["lxc-attach", "-n", name, "--", "getent", "hosts", "github.com"];
+  for (let i = 0; i < 60; i++) {
+    const ok = await new Promise((resolve) => {
+      execFile("sudo", cmd, null, (error2) => {
+        resolve(!error2);
+      });
+    });
+    if (ok) {
+      info("Name resolution inside the container works");
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  throw new Error("Container has no working DNS after 30 seconds");
 }
 async function setHost(name, ip) {
   const cmd = `echo "${ip}  ${name}" >> /etc/hosts`;
@@ -19552,6 +19567,9 @@ async function run() {
       }
     }
     if (script) {
+      startGroup("Waiting for network in container");
+      await waitForNetwork(name);
+      endGroup();
       startGroup(`Running initialization script`);
       await init(name, script);
       endGroup();

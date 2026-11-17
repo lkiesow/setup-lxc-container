@@ -45,6 +45,8 @@ jobs:
             version: 10-Stream
           - dist: fedora
             version: '44'
+          - dist: fedora
+            version: '45'
           - dist: rockylinux
             version: '9'
           - dist: rockylinux

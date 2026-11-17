@@ -8,7 +8,8 @@ import {
   sshKeygen,
   sshKeyscan,
   startContainer,
-  stopDocker
+  stopDocker,
+  waitForNetwork
 } from './wait.js'
 
 const INIT_CENTOS = `
@@ -90,6 +91,10 @@ async function run(): Promise<void> {
       }
     }
     if (script) {
+      core.startGroup('Waiting for network in container')
+      await waitForNetwork(name)
+      core.endGroup()
+
       core.startGroup(`Running initialization script`)
       await init(name, script)
       core.endGroup()

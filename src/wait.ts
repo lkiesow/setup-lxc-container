@@ -98,9 +98,14 @@ export async function getIp(name: string): Promise<string> {
       )
     })
 
-    // Check if the container has an IP address
-    const ipInfo = info.split('\n').filter((l: string) => l.startsWith('IP'))
-    const ip = ipInfo?.[0]?.split(/ +/)?.[1]
+    // Check if the container has an IPv4 address. IPv6 addresses (e.g. from
+    // router advertisements) may show up before DHCPv4 has finished, in which
+    // case the container has no working network or DNS yet.
+    const ip = info
+      .split('\n')
+      .filter((l: string) => l.startsWith('IP'))
+      .map((l: string) => l.split(/ +/)?.[1])
+      .find((a: string | undefined) => a && !a.includes(':'))
 
     if (ip) {
       return ip
@@ -110,8 +115,31 @@ export async function getIp(name: string): Promise<string> {
     await new Promise(resolve => setTimeout(resolve, 100))
   }
 
-  // We did not get an IP after 200 tries (~20 sec)
-  throw new Error('Container failed to get IP address')
+  // We did not get an IPv4 address after 200 tries (~20 sec)
+  throw new Error('Container failed to get IPv4 address')
+}
+
+export async function waitForNetwork(name: string): Promise<void> {
+  // Having an IP address does not mean that name resolution already works
+  // inside the container. Wait up to 30 seconds until it does.
+  const cmd = ['lxc-attach', '-n', name, '--', 'getent', 'hosts', 'github.com']
+  for (let i = 0; i < 60; i++) {
+    const ok: boolean = await new Promise(resolve => {
+      execFile('sudo', cmd, null, (error: ExecFileException | null) => {
+        resolve(!error)
+      })
+    })
+
+    if (ok) {
+      core.info('Name resolution inside the container works')
+      return
+    }
+
+    // Sleep 500ms before retry
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+
+  throw new Error('Container has no working DNS after 30 seconds')
 }
 
 export async function setHost(name: string, ip: string): Promise<void> {
